@@ -1,385 +1,100 @@
-# 🧩 Rubik's Cube Move Simulator
+# Rubik's Cube Move Simulator V2.3
 
-A terminal-based **3×3 Rubik's Cube Move Simulator** developed in C.
+A terminal-based Rubik's Cube simulator written in C. It renders a colored 3x3 cube in the terminal, accepts standard cube notation, and includes a timer, move history, undo system, and a timed challenge (scramble) mode with best-score tracking.
 
-The simulator maintains the state of a virtual Rubik's Cube and allows users to perform standard cube rotations, execute multiple moves, generate random scrambles, reset the cube, and check whether the cube has returned to the solved state.
+## Features
 
----
+- 🎨 **Colored terminal display** — each face is rendered with real background colors (white, yellow, green, blue, orange, red)
+- ⏱️ **Solving timer** — starts automatically on your first move and stops when the cube is solved
+- 📜 **Move history** — full log of every move performed in the session
+- ↩️ **Undo system** — reverts the last move (and its effect on move count / timer)
+- 🎲 **Challenge mode** — generates a 20-move random scramble and times you to a solve
+- 🏆 **Best score tracking** — remembers your fastest / lowest-move challenge completion
+- ✅ **Solved detection** — automatically detects and announces when the cube is solved
 
-## 🎯 Project Overview
+## Getting Started
 
-This project was developed to strengthen practical C programming and algorithmic problem-solving skills through a real-world simulation.
+### Prerequisites
 
-Instead of representing the cube as a simple visual object, the program maintains the state of all **6 faces × 3 × 3 stickers** and updates the cube whenever a valid move is performed.
+- A C compiler (e.g. `gcc`)
+- A terminal that supports ANSI color escape codes (most Linux/macOS terminals; Windows Terminal or WSL recommended on Windows)
 
-### Cube Representation
-
-```text
-                    UP
-                     ↑
-                     │
-              ┌─────────────┐
-              │  W W W      │
-              │  W W W      │
-              │  W W W      │
-              └─────────────┘
-
-     LEFT       FRONT       RIGHT       BACK
-   ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐
-   │ O O O │  │ G G G │  │ R R R │  │ B B B │
-   │ O O O │  │ G G G │  │ R R R │  │ B B B │
-   │ O O O │  │ G G G │  │ R R R │  │ B B B │
-   └───────┘  └───────┘  └───────┘  └───────┘
-
-                    DOWN
-                     ↓
-              ┌─────────────┐
-              │  Y Y Y      │
-              │  Y Y Y      │
-              │  Y Y Y      │
-              └─────────────┘
-```
-
----
-
-## ✨ Features
-
-* 🧩 Complete 3×3 cube representation
-* 🔄 Six standard face rotations
-* ↩️ Counter-clockwise moves
-* 🔁 180° moves
-* ⌨️ Interactive terminal controls
-* 📝 Multiple moves in a single input
-* 🔢 Move counter
-* 🎲 Random scramble generator
-* 🔄 Cube reset functionality
-* ✅ Solved-state detection
-* 📖 Built-in help menu
-* 💻 Pure C implementation
-* 🚫 No external libraries required
-
----
-
-## 🎮 Supported Moves
-
-The simulator follows standard Rubik's Cube move notation.
-
-| Move | Operation               |
-| ---- | ----------------------- |
-| `U`  | Up clockwise            |
-| `U'` | Up counter-clockwise    |
-| `U2` | Up 180°                 |
-| `D`  | Down clockwise          |
-| `D'` | Down counter-clockwise  |
-| `D2` | Down 180°               |
-| `L`  | Left clockwise          |
-| `L'` | Left counter-clockwise  |
-| `L2` | Left 180°               |
-| `R`  | Right clockwise         |
-| `R'` | Right counter-clockwise |
-| `R2` | Right 180°              |
-| `F`  | Front clockwise         |
-| `F'` | Front counter-clockwise |
-| `F2` | Front 180°              |
-| `B`  | Back clockwise          |
-| `B'` | Back counter-clockwise  |
-| `B2` | Back 180°               |
-
----
-
-## 🖥️ Program Commands
-
-| Command | Function                         |
-| ------- | -------------------------------- |
-| `S`     | Display the current cube         |
-| `H`     | Display the move guide           |
-| `X`     | Reset the cube                   |
-| `C`     | Check whether the cube is solved |
-| `G`     | Generate a random scramble       |
-| `Q`     | Quit the simulator               |
-
----
-
-## 🚀 Example Usage
-
-After launching the simulator, individual moves can be entered:
-
-```text
-Move [1] > R
-Move performed: R
-```
-
-Multiple moves can also be entered in a single line:
-
-```text
-Move [1] > R U R' U' F2 D L' B
-```
-
-The simulator processes each move and updates the cube state.
-
-Example output:
-
-```text
-Move performed: R
-Move performed: U
-Move performed: R'
-Move performed: U'
-Move performed: F2
-Move performed: D
-Move performed: L'
-Move performed: B
-```
-
-The resulting cube state is then displayed in the terminal.
-
----
-
-## 🔀 Scramble Generation
-
-The `G` command generates a random scramble.
-
-Example:
-
-```text
-Move [1] > G
-
-Enter scramble length: 20
-
-Scramble:
-R U2 F' L D2 B R' U F2 D' L2 ...
-```
-
-The generated moves are automatically applied to the cube.
-
----
-
-## ✅ Solved-State Detection
-
-The simulator can determine whether every sticker has returned to its original solved position.
-
-For example:
-
-```text
-Move [1] > R R' U U' F F' D D' L L' B B'
-```
-
-Then:
-
-```text
-Move [13] > C
-```
-
-The simulator reports:
-
-```text
-*** CUBE IS SOLVED! ***
-```
-
-A scrambled cube produces:
-
-```text
-Cube is NOT solved.
-```
-
----
-
-## 🧠 Concepts Used
-
-This project applies several fundamental programming and algorithmic concepts:
-
-* C programming
-* Multidimensional arrays
-* Functions
-* Loops
-* Conditional statements
-* String handling
-* Input parsing
-* Pointer usage
-* Random number generation
-* State management
-* Modular program design
-* Algorithmic problem solving
-* Simulation logic
-
----
-
-## 🛠️ Technologies
-
-**Language:** C
-
-**Compiler:** GCC
-
-**Platform:** Terminal / Command Line
-
-**Development Environment:** VS Code
-
-**Version Control:** Git & GitHub
-
----
-
-## 📂 Project Structure
-
-```text
-Rubiks-Cube-Move-Simulator/
-│
-├── rubiks_cube.c
-├── README.md
-└── .gitignore
-```
-
-### Main Source File
-
-`rubiks_cube.c`
-
-Contains:
-
-* Cube representation
-* Face rotation algorithms
-* Move processing
-* Scramble generation
-* Solved-state detection
-* Terminal interface
-
----
-
-## ⚙️ How to Run
-
-### 1. Clone the repository
+### Build
 
 ```bash
-git clone https://github.com/annapoorna147/Rubiks-Cube-Move-Simulator.git
+gcc -o cube_simulator cube_simulator.c
 ```
 
-### 2. Enter the project directory
+### Run
 
 ```bash
-cd Rubiks-Cube-Move-Simulator
+./cube_simulator
 ```
 
-### 3. Compile
+## Usage
 
-```bash
-gcc rubiks_cube.c -o rubiks_cube
+On launch, the simulator displays the help menu and a solved cube. Enter commands or moves at the prompt:
+
+```
+Move [1] > R U R' U'
 ```
 
-### 4. Run
+You can enter multiple moves on one line, separated by spaces.
 
-```bash
-./rubiks_cube
+### Move Notation
+
+Standard Rubik's Cube (Singmaster) notation is used. Each face can be turned clockwise, counter-clockwise (`'`), or 180 degrees (`2`):
+
+| Face  | Clockwise | Counter-clockwise | 180° |
+|-------|-----------|--------------------|------|
+| Up    | `U`       | `U'`               | `U2` |
+| Down  | `D`       | `D'`               | `D2` |
+| Left  | `L`       | `L'`               | `L2` |
+| Right | `R`       | `R'`               | `R2` |
+| Front | `F`       | `F'`               | `F2` |
+| Back  | `B`       | `B'`               | `B2` |
+
+### Commands
+
+| Command | Action |
+|---------|--------|
+| `S` | Show the current cube state |
+| `H` | Show the help menu |
+| `X` | Reset the cube, timer, and move history |
+| `C` | Check whether the cube is solved |
+| `G` | Start challenge mode (random scramble + timer) |
+| `M` | Show move history |
+| `UNDO` | Undo the last move |
+| `BEST` | Show the best challenge time/move count |
+| `Q` | Quit |
+
+Commands are case-insensitive (e.g. `s` and `S` both work); moves are case-sensitive and must match standard notation exactly.
+
+### Challenge Mode
+
+Typing `G` resets the cube, applies a 20-move random scramble (avoiding consecutive turns of the same face), and starts a timer. Solve the cube using standard moves — the simulator automatically detects completion, reports your time and move count, and updates the best score if you beat your previous record. Check it anytime with `BEST`.
+
+### Example Session
+
+```
+Move [1] > S              # show the cube
+Move [1] > R U R' U'      # perform a sequence of moves
+Move [5] > M               # view move history
+Move [5] > UNDO            # undo the last move
+Move [4] > C                # check if solved
+Move [4] > G                 # start a timed challenge
+Move [1] > ...solve it...
+Move [1] > BEST              # view your best score
+Move [1] > Q                  # quit
 ```
 
----
+## How It Works
 
-## 🧪 Testing
+The cube is stored internally as a `char[6][3][3]` array — one 3x3 grid of characters per face (`W`, `Y`, `G`, `B`, `O`, `R` for White, Yellow, Green, Blue, Orange, Red). Each move function rotates a face 90° clockwise and cyclically permutes the adjacent edge stickers on the four neighboring faces. Counter-clockwise and 180° turns are implemented by repeating the clockwise move three times or twice, respectively — a simple, if not maximally efficient, approach that keeps the logic easy to follow and verify.
 
-The simulator was tested using:
+## Limitations
 
-### Single moves
-
-```text
-R
-U
-D
-L
-F
-B
-```
-
-### Reverse moves
-
-```text
-R R'
-U U'
-D D'
-L L'
-F F'
-B B'
-```
-
-### Double moves
-
-```text
-R2
-U2
-D2
-L2
-F2
-B2
-```
-
-### Move sequences
-
-```text
-R U R' U' F2 D L' B
-```
-
-### Solved-state verification
-
-```text
-R R' U U' F F' D D' L L' B B'
-```
-
----
-
-## 🔮 Future Improvements
-
-Possible future versions could include:
-
-* 🎨 Color-based terminal interface
-* 🧊 Interactive 3D cube visualization
-* 🖱️ Mouse-controlled cube rotations
-* 🤖 Automatic cube solver
-* 🧠 Optimal solution generation
-* ⏱️ Speed-solving timer
-* 📊 Solving statistics
-* 💾 Save and load cube states
-* 🌐 Web-based version
-* 📱 Mobile version
-
----
-
-## 🎓 Learning Outcome
-
-Through this project, the following skills were practiced:
-
-```text
-Problem Understanding
-        ↓
-Data Representation
-        ↓
-Algorithm Design
-        ↓
-C Implementation
-        ↓
-State Management
-        ↓
-Input Processing
-        ↓
-Testing & Debugging
-        ↓
-Git Version Control
-        ↓
-GitHub Deployment
-```
-
----
-
-## 👩‍💻 Author
-
-**Annapoorna**
-
-Electronics & Communication Engineering
-
----
-
-## ⭐ Project Status
-
-**Status:** Completed ✅
-
-**Version:** 1.0
-
-This project was created as a programming and algorithmic problem-solving mini project.
-
----
-
-⭐ If you found this project interesting, consider starring the repository!
+- Solving is manual — the simulator does not include a solving algorithm or hints.
+- Undo only reverts one move at a time and does not support redo.
+- Move history is capped at 1000 entries per session.
+- Timer resolution is whole seconds (via `time()`), not sub-second precision.
