@@ -7,127 +7,56 @@
 #define MAX_HISTORY 1000
 #define MAX_MOVE_LENGTH 4
 
-/*
-============================================================
-             RUBIK'S CUBE MOVE SIMULATOR V2.2
-============================================================
-
-FEATURES
-------------------------------------------------------------
-🎨 Colored terminal display
-⏱️  Solving timer
-📜 Move history
-↩️  Undo last move
-🔢 Move counter
-🎲 Random scramble
-✅ Solved-state detection
-📊 Move statistics
-
-FACES
-------------------------------------------------------------
-0 = UP
-1 = DOWN
-2 = FRONT
-3 = BACK
-4 = LEFT
-5 = RIGHT
-
-COLORS
-------------------------------------------------------------
-W = White
-Y = Yellow
-G = Green
-B = Blue
-O = Orange
-R = Red
-
-MOVES
-------------------------------------------------------------
-U   U'  U2
-D   D'  D2
-L   L'  L2
-R   R'  R2
-F   F'  F2
-B   B'  B2
-
-COMMANDS
-------------------------------------------------------------
-S       = Show cube
-H       = Help
-X       = Reset cube
-C       = Check solved
-G       = Generate scramble
-M       = Move history
-UNDO    = Undo last move
-Q       = Quit
-
-============================================================
-*/
-
-
-// ============================================================
-// GLOBAL DATA
-// ============================================================
-
 char cube[6][SIZE][SIZE];
-
 char moveHistory[MAX_HISTORY][MAX_MOVE_LENGTH];
 
 int moveCount = 0;
 int historyCount = 0;
 
+int challengeMode = 0;
+int challengeMoves = 0;
+
+double bestTime = -1.0;
+int bestMoves = -1;
+
 time_t startTime;
 int timerRunning = 0;
 
 
-// ============================================================
-// INITIALIZE CUBE
-// ============================================================
+/* ============================================================
+   INITIALIZE CUBE
+   ============================================================ */
 
 void initializeCube()
 {
-    char colors[6] = {
-        'W',
-        'Y',
-        'G',
-        'B',
-        'O',
-        'R'
-    };
+    char colors[6] = {'W','Y','G','B','O','R'};
 
     for (int face = 0; face < 6; face++)
-    {
         for (int row = 0; row < SIZE; row++)
-        {
             for (int col = 0; col < SIZE; col++)
-            {
                 cube[face][row][col] = colors[face];
-            }
-        }
-    }
 }
 
 
-// ============================================================
-// RESET SESSION
-// ============================================================
+/* ============================================================
+   RESET SESSION
+   ============================================================ */
 
 void resetSession()
 {
     moveCount = 0;
     historyCount = 0;
+    challengeMoves = 0;
     timerRunning = 0;
 
     for (int i = 0; i < MAX_HISTORY; i++)
-    {
         moveHistory[i][0] = '\0';
-    }
 }
 
 
-// ============================================================
-// START TIMER
-// ============================================================
+/* ============================================================
+   TIMER
+   ============================================================ */
 
 void startTimer()
 {
@@ -135,16 +64,9 @@ void startTimer()
     {
         startTime = time(NULL);
         timerRunning = 1;
-
-        printf("\n");
-        printf("⏱️  Timer started!\n");
+        printf("\n⏱️  Timer started!\n");
     }
 }
-
-
-// ============================================================
-// GET ELAPSED TIME
-// ============================================================
 
 double getElapsedTime()
 {
@@ -154,48 +76,32 @@ double getElapsedTime()
     return difftime(time(NULL), startTime);
 }
 
-
-// ============================================================
-// STOP TIMER
-// ============================================================
-
 double stopTimer()
 {
     if (!timerRunning)
         return 0.0;
 
     double elapsed = getElapsedTime();
-
     timerRunning = 0;
 
     return elapsed;
 }
 
 
-// ============================================================
-// ADD MOVE TO HISTORY
-// ============================================================
+/* ============================================================
+   MOVE HISTORY
+   ============================================================ */
 
 void addToHistory(const char *move)
 {
     if (historyCount >= MAX_HISTORY)
         return;
 
-    strncpy(
-        moveHistory[historyCount],
-        move,
-        MAX_MOVE_LENGTH - 1
-    );
-
+    strncpy(moveHistory[historyCount], move, MAX_MOVE_LENGTH - 1);
     moveHistory[historyCount][MAX_MOVE_LENGTH - 1] = '\0';
 
     historyCount++;
 }
-
-
-// ============================================================
-// DISPLAY MOVE HISTORY
-// ============================================================
 
 void displayHistory()
 {
@@ -221,55 +127,42 @@ void displayHistory()
         }
 
         printf("\n");
-        printf("\nTotal moves: %d\n", historyCount);
+        printf("Total moves: %d\n", historyCount);
+
+        if (challengeMode)
+            printf("Challenge moves: %d\n", challengeMoves);
     }
 
     if (timerRunning)
-    {
-        printf(
-            "Elapsed time: %.0f seconds\n",
-            getElapsedTime()
-        );
-    }
+        printf("Elapsed time: %.0f seconds\n", getElapsedTime());
     else
-    {
         printf("Timer: Not running\n");
-    }
 
     printf("\n============================================================\n");
 }
 
 
-// ============================================================
-// ROTATE FACE CLOCKWISE
-// ============================================================
+/* ============================================================
+   ROTATE FACE
+   ============================================================ */
 
 void rotateFaceClockwise(int face)
 {
     char temp[SIZE][SIZE];
 
     for (int row = 0; row < SIZE; row++)
-    {
         for (int col = 0; col < SIZE; col++)
-        {
             temp[row][col] = cube[face][row][col];
-        }
-    }
 
     for (int row = 0; row < SIZE; row++)
-    {
         for (int col = 0; col < SIZE; col++)
-        {
-            cube[face][col][SIZE - 1 - row] =
-                temp[row][col];
-        }
-    }
+            cube[face][col][SIZE - 1 - row] = temp[row][col];
 }
 
 
-// ============================================================
-// R MOVE
-// ============================================================
+/* ============================================================
+   R MOVE
+   ============================================================ */
 
 void moveR()
 {
@@ -287,8 +180,7 @@ void moveR()
         cube[2][i][2] = cube[1][i][2];
 
     for (int i = 0; i < SIZE; i++)
-        cube[1][i][2] =
-            cube[3][SIZE - 1 - i][0];
+        cube[1][i][2] = cube[3][SIZE - 1 - i][0];
 
     for (int i = 0; i < SIZE; i++)
         cube[3][SIZE - 1 - i][0] = temp[i];
@@ -308,9 +200,9 @@ void moveR2()
 }
 
 
-// ============================================================
-// L MOVE
-// ============================================================
+/* ============================================================
+   L MOVE
+   ============================================================ */
 
 void moveL()
 {
@@ -322,12 +214,10 @@ void moveL()
         temp[i] = cube[0][i][0];
 
     for (int i = 0; i < SIZE; i++)
-        cube[0][i][0] =
-            cube[3][SIZE - 1 - i][2];
+        cube[0][i][0] = cube[3][SIZE - 1 - i][2];
 
     for (int i = 0; i < SIZE; i++)
-        cube[3][SIZE - 1 - i][2] =
-            cube[1][i][0];
+        cube[3][SIZE - 1 - i][2] = cube[1][i][0];
 
     for (int i = 0; i < SIZE; i++)
         cube[1][i][0] = cube[2][i][0];
@@ -350,9 +240,9 @@ void moveL2()
 }
 
 
-// ============================================================
-// U MOVE
-// ============================================================
+/* ============================================================
+   U MOVE
+   ============================================================ */
 
 void moveU()
 {
@@ -390,9 +280,9 @@ void moveU2()
 }
 
 
-// ============================================================
-// D MOVE
-// ============================================================
+/* ============================================================
+   D MOVE
+   ============================================================ */
 
 void moveD()
 {
@@ -430,9 +320,9 @@ void moveD2()
 }
 
 
-// ============================================================
-// F MOVE
-// ============================================================
+/* ============================================================
+   F MOVE
+   ============================================================ */
 
 void moveF()
 {
@@ -444,16 +334,13 @@ void moveF()
         temp[i] = cube[0][2][i];
 
     for (int i = 0; i < SIZE; i++)
-        cube[0][2][i] =
-            cube[4][SIZE - 1 - i][2];
+        cube[0][2][i] = cube[4][SIZE - 1 - i][2];
 
     for (int i = 0; i < SIZE; i++)
-        cube[4][SIZE - 1 - i][2] =
-            cube[1][0][i];
+        cube[4][SIZE - 1 - i][2] = cube[1][0][i];
 
     for (int i = 0; i < SIZE; i++)
-        cube[1][0][i] =
-            cube[5][SIZE - 1 - i][0];
+        cube[1][0][i] = cube[5][SIZE - 1 - i][0];
 
     for (int i = 0; i < SIZE; i++)
         cube[5][SIZE - 1 - i][0] = temp[i];
@@ -473,9 +360,9 @@ void moveF2()
 }
 
 
-// ============================================================
-// B MOVE
-// ============================================================
+/* ============================================================
+   B MOVE
+   ============================================================ */
 
 void moveB()
 {
@@ -490,12 +377,10 @@ void moveB()
         cube[0][0][i] = cube[5][i][2];
 
     for (int i = 0; i < SIZE; i++)
-        cube[5][i][2] =
-            cube[1][2][SIZE - 1 - i];
+        cube[5][i][2] = cube[1][2][SIZE - 1 - i];
 
     for (int i = 0; i < SIZE; i++)
-        cube[1][2][SIZE - 1 - i] =
-            cube[4][i][0];
+        cube[1][2][SIZE - 1 - i] = cube[4][i][0];
 
     for (int i = 0; i < SIZE; i++)
         cube[4][i][0] = temp[i];
@@ -515,40 +400,27 @@ void moveB2()
 }
 
 
-// ============================================================
-// CHECK SOLVED
-// ============================================================
+/* ============================================================
+   SOLVED CHECK
+   ============================================================ */
 
 int isSolved()
 {
-    char colors[6] = {
-        'W',
-        'Y',
-        'G',
-        'B',
-        'O',
-        'R'
-    };
+    char colors[6] = {'W','Y','G','B','O','R'};
 
     for (int face = 0; face < 6; face++)
-    {
         for (int row = 0; row < SIZE; row++)
-        {
             for (int col = 0; col < SIZE; col++)
-            {
                 if (cube[face][row][col] != colors[face])
                     return 0;
-            }
-        }
-    }
 
     return 1;
 }
 
 
-// ============================================================
-// PRINT COLORED STICKER
-// ============================================================
+/* ============================================================
+   COLORED DISPLAY
+   ============================================================ */
 
 void printSticker(char color)
 {
@@ -584,15 +456,15 @@ void printSticker(char color)
 }
 
 
-// ============================================================
-// DISPLAY CUBE
-// ============================================================
+/* ============================================================
+   DISPLAY CUBE
+   ============================================================ */
 
 void displayCube()
 {
     printf("\n");
     printf("================================================================\n");
-    printf("                 RUBIK'S CUBE SIMULATOR V2.2\n");
+    printf("                 RUBIK'S CUBE SIMULATOR V2.3\n");
     printf("================================================================\n\n");
 
     printf("                           UP\n\n");
@@ -602,9 +474,7 @@ void displayCube()
         printf("                    ");
 
         for (int col = 0; col < SIZE; col++)
-        {
             printSticker(cube[0][row][col]);
-        }
 
         printf("\n");
     }
@@ -637,7 +507,6 @@ void displayCube()
     }
 
     printf("\n");
-
     printf("                         DOWN\n\n");
 
     for (int row = 0; row < SIZE; row++)
@@ -655,30 +524,27 @@ void displayCube()
 
     printf("Moves: %d", moveCount);
 
+    if (challengeMode)
+        printf("    |    Challenge Moves: %d", challengeMoves);
+
     if (timerRunning)
-    {
-        printf(
-            "    |    Time: %.0f sec",
-            getElapsedTime()
-        );
-    }
+        printf("    |    Time: %.0f sec", getElapsedTime());
 
     printf("\n");
     printf("================================================================\n");
 }
 
 
-// ============================================================
-// HELP
-// ============================================================
+/* ============================================================
+   HELP
+   ============================================================ */
 
 void displayHelp()
 {
     printf("\n");
-    printf("====================== V2.2 HELP ======================\n");
+    printf("====================== V2.3 HELP ======================\n");
 
     printf("\nMOVES:\n");
-
     printf("U   = Up clockwise\n");
     printf("U'  = Up counter-clockwise\n");
     printf("U2  = Up 180 degrees\n");
@@ -704,167 +570,140 @@ void displayHelp()
     printf("B2  = Back 180 degrees\n");
 
     printf("\nCOMMANDS:\n");
-
     printf("S       = Show cube\n");
     printf("H       = Show help\n");
-    printf("X       = Reset cube, timer and history\n");
+    printf("X       = Reset cube\n");
     printf("C       = Check solved\n");
-    printf("G       = Generate random scramble\n");
-    printf("M       = Show move history\n");
+    printf("G       = Start challenge\n");
+    printf("M       = Move history\n");
     printf("UNDO    = Undo last move\n");
+    printf("BEST    = Show best challenge score\n");
     printf("Q       = Quit\n");
 
     printf("\n=======================================================\n");
 }
 
 
-// ============================================================
-// PERFORM ONE MOVE
-// ============================================================
+/* ============================================================
+   VALIDATE MOVE
+   ============================================================ */
 
-int performMove(char move[])
+int isValidMove(const char *move)
+{
+    const char *moves[] =
+    {
+        "U","U'","U2",
+        "D","D'","D2",
+        "L","L'","L2",
+        "R","R'","R2",
+        "F","F'","F2",
+        "B","B'","B2"
+    };
+
+    for (int i = 0; i < 18; i++)
+    {
+        if (strcmp(move, moves[i]) == 0)
+            return 1;
+    }
+
+    return 0;
+}
+
+
+/* ============================================================
+   PERFORM MOVE
+   ============================================================ */
+
+int performMove(const char *move)
 {
     if (strcmp(move, "U") == 0)
-    {
         moveU();
-    }
     else if (strcmp(move, "U'") == 0)
-    {
         moveUPrime();
-    }
     else if (strcmp(move, "U2") == 0)
-    {
         moveU2();
-    }
     else if (strcmp(move, "D") == 0)
-    {
         moveD();
-    }
     else if (strcmp(move, "D'") == 0)
-    {
         moveDPrime();
-    }
     else if (strcmp(move, "D2") == 0)
-    {
         moveD2();
-    }
     else if (strcmp(move, "L") == 0)
-    {
         moveL();
-    }
     else if (strcmp(move, "L'") == 0)
-    {
         moveLPrime();
-    }
     else if (strcmp(move, "L2") == 0)
-    {
         moveL2();
-    }
     else if (strcmp(move, "R") == 0)
-    {
         moveR();
-    }
     else if (strcmp(move, "R'") == 0)
-    {
         moveRPrime();
-    }
     else if (strcmp(move, "R2") == 0)
-    {
         moveR2();
-    }
     else if (strcmp(move, "F") == 0)
-    {
         moveF();
-    }
     else if (strcmp(move, "F'") == 0)
-    {
         moveFPrime();
-    }
     else if (strcmp(move, "F2") == 0)
-    {
         moveF2();
-    }
     else if (strcmp(move, "B") == 0)
-    {
         moveB();
-    }
     else if (strcmp(move, "B'") == 0)
-    {
         moveBPrime();
-    }
     else if (strcmp(move, "B2") == 0)
-    {
         moveB2();
-    }
     else
-    {
         return 0;
-    }
 
     return 1;
 }
 
 
-// ============================================================
-// GET INVERSE MOVE
-// ============================================================
+/* ============================================================
+   INVERSE MOVE
+   ============================================================ */
 
-void getInverseMove(
-    const char *move,
-    char inverse[]
-)
+void getInverseMove(const char *move, char inverse[])
 {
     if (strcmp(move, "U") == 0)
         strcpy(inverse, "U'");
-
     else if (strcmp(move, "U'") == 0)
         strcpy(inverse, "U");
-
     else if (strcmp(move, "U2") == 0)
         strcpy(inverse, "U2");
 
     else if (strcmp(move, "D") == 0)
         strcpy(inverse, "D'");
-
     else if (strcmp(move, "D'") == 0)
         strcpy(inverse, "D");
-
     else if (strcmp(move, "D2") == 0)
         strcpy(inverse, "D2");
 
     else if (strcmp(move, "L") == 0)
         strcpy(inverse, "L'");
-
     else if (strcmp(move, "L'") == 0)
         strcpy(inverse, "L");
-
     else if (strcmp(move, "L2") == 0)
         strcpy(inverse, "L2");
 
     else if (strcmp(move, "R") == 0)
         strcpy(inverse, "R'");
-
     else if (strcmp(move, "R'") == 0)
         strcpy(inverse, "R");
-
     else if (strcmp(move, "R2") == 0)
         strcpy(inverse, "R2");
 
     else if (strcmp(move, "F") == 0)
         strcpy(inverse, "F'");
-
     else if (strcmp(move, "F'") == 0)
         strcpy(inverse, "F");
-
     else if (strcmp(move, "F2") == 0)
         strcpy(inverse, "F2");
 
     else if (strcmp(move, "B") == 0)
         strcpy(inverse, "B'");
-
     else if (strcmp(move, "B'") == 0)
         strcpy(inverse, "B");
-
     else if (strcmp(move, "B2") == 0)
         strcpy(inverse, "B2");
 
@@ -873,9 +712,9 @@ void getInverseMove(
 }
 
 
-// ============================================================
-// UNDO LAST MOVE
-// ============================================================
+/* ============================================================
+   UNDO
+   ============================================================ */
 
 void undoLastMove()
 {
@@ -892,132 +731,93 @@ void undoLastMove()
         inverse
     );
 
-    if (strlen(inverse) == 0)
-    {
-        printf("\nUnable to undo the last move.\n");
-        return;
-    }
-
-    /*
-        Apply the inverse of the last move.
-    */
-
     performMove(inverse);
 
-    printf("\n");
-    printf("↩️  Undo successful!\n");
-    printf("Undid move: %s\n",
-           moveHistory[historyCount - 1]);
-
-    /*
-        Remove the last move from history.
-    */
+    printf(
+        "\n↩️  Undid move: %s\n",
+        moveHistory[historyCount - 1]
+    );
 
     moveHistory[historyCount - 1][0] = '\0';
-
     historyCount--;
-
-    /*
-        Keep move counter synchronized.
-    */
 
     if (moveCount > 0)
         moveCount--;
 
-    /*
-        If every move has been undone,
-        return to the initial state.
-    */
-
-    if (historyCount == 0)
-    {
-        timerRunning = 0;
-
-        printf("All moves have been undone.\n");
-        printf("⏱️  Timer stopped.\n");
-    }
+    if (challengeMode && challengeMoves > 0)
+        challengeMoves--;
 
     displayCube();
 }
 
 
-// ============================================================
-// PROCESS MULTIPLE MOVES
-// ============================================================
+/* ============================================================
+   PROCESS MOVES
+   ============================================================ */
 
 void processMoves(char line[])
 {
-    char *token;
-
-    token = strtok(line, " \t\n");
+    char *token = strtok(line, " \t\n");
 
     while (token != NULL)
     {
-        /*
-            First validate the move WITHOUT executing it.
-        */
-
-        char testMove[4];
-
-        strcpy(testMove, token);
-
-        int valid = 0;
-
-        if (
-            strcmp(testMove, "U") == 0 ||
-            strcmp(testMove, "U'") == 0 ||
-            strcmp(testMove, "U2") == 0 ||
-            strcmp(testMove, "D") == 0 ||
-            strcmp(testMove, "D'") == 0 ||
-            strcmp(testMove, "D2") == 0 ||
-            strcmp(testMove, "L") == 0 ||
-            strcmp(testMove, "L'") == 0 ||
-            strcmp(testMove, "L2") == 0 ||
-            strcmp(testMove, "R") == 0 ||
-            strcmp(testMove, "R'") == 0 ||
-            strcmp(testMove, "R2") == 0 ||
-            strcmp(testMove, "F") == 0 ||
-            strcmp(testMove, "F'") == 0 ||
-            strcmp(testMove, "F2") == 0 ||
-            strcmp(testMove, "B") == 0 ||
-            strcmp(testMove, "B'") == 0 ||
-            strcmp(testMove, "B2") == 0
-        )
+        if (isValidMove(token))
         {
-            valid = 1;
-        }
-
-        if (valid)
-        {
-            /*
-                Execute the move EXACTLY ONCE.
-            */
-
             performMove(token);
-
-            /*
-                Start timer on first valid move.
-            */
 
             if (!timerRunning)
                 startTimer();
 
-            /*
-                Add move to history.
-            */
-
             addToHistory(token);
 
-            /*
-                Increment move count.
-            */
-
             moveCount++;
+
+            if (challengeMode)
+                challengeMoves++;
 
             printf(
                 "Move performed: %s\n",
                 token
             );
+
+            if (challengeMode && isSolved())
+            {
+                double finalTime = stopTimer();
+
+                printf("\n");
+                printf("====================================================\n");
+                printf("              🎉 CHALLENGE COMPLETE! 🎉\n");
+                printf("====================================================\n");
+
+                printf(
+                    "⏱️  Solve Time : %.0f seconds\n",
+                    finalTime
+                );
+
+                printf(
+                    "📊 Challenge Moves: %d\n",
+                    challengeMoves
+                );
+
+                if (
+                    bestTime < 0 ||
+                    finalTime < bestTime ||
+                    (
+                        finalTime == bestTime &&
+                        challengeMoves < bestMoves
+                    )
+                )
+                {
+                    bestTime = finalTime;
+                    bestMoves = challengeMoves;
+
+                    printf("\n🏆 NEW BEST SCORE!\n");
+                }
+
+                printf("====================================================\n");
+
+                challengeMode = 0;
+            }
         }
         else
         {
@@ -1026,9 +826,7 @@ void processMoves(char line[])
                 token
             );
 
-            printf(
-                "Type H for help.\n"
-            );
+            printf("Type H for help.\n");
         }
 
         token = strtok(NULL, " \t\n");
@@ -1036,26 +834,37 @@ void processMoves(char line[])
 }
 
 
-// ============================================================
-// GENERATE RANDOM SCRAMBLE
-// ============================================================
+/* ============================================================
+   START CHALLENGE
+   ============================================================ */
 
-void generateScramble(int length)
+void startChallenge()
 {
-    char *moves[] =
+    const char *moves[] =
     {
-        "U", "U'", "U2",
-        "D", "D'", "D2",
-        "L", "L'", "L2",
-        "R", "R'", "R2",
-        "F", "F'", "F2",
-        "B", "B'", "B2"
+        "U","U'","U2",
+        "D","D'","D2",
+        "L","L'","L2",
+        "R","R'","R2",
+        "F","F'","F2",
+        "B","B'","B2"
     };
 
+    int length = 20;
     int previousFace = -1;
 
+    initializeCube();
+    resetSession();
+
+    challengeMode = 1;
+    challengeMoves = 0;
+
     printf("\n");
-    printf("================ SCRAMBLE ================\n\n");
+    printf("====================================================\n");
+    printf("                 🎯 CHALLENGE MODE\n");
+    printf("====================================================\n");
+
+    printf("\nScramble:\n");
 
     for (int i = 0; i < length; i++)
     {
@@ -1071,40 +880,61 @@ void generateScramble(int length)
 
         previousFace = face;
 
-        /*
-            Execute exactly once.
-        */
-
         performMove(moves[index]);
 
-        /*
-            Start timer.
-        */
+        printf("%s", moves[index]);
 
-        if (!timerRunning)
-            startTimer();
-
-        /*
-            Store move.
-        */
-
-        addToHistory(moves[index]);
-
-        moveCount++;
-
-        printf(
-            "%s ",
-            moves[index]
-        );
+        if (i < length - 1)
+            printf(" ");
     }
 
-    printf("\n\n===========================================\n");
+    printf("\n");
+    printf("\n🎯 Solve the scrambled cube!\n");
+
+    startTime = time(NULL);
+    timerRunning = 1;
+
+    printf("⏱️  Challenge timer started!\n");
+
+    displayCube();
 }
 
 
-// ============================================================
-// MAIN
-// ============================================================
+/* ============================================================
+   BEST SCORE
+   ============================================================ */
+
+void displayBestScore()
+{
+    printf("\n");
+    printf("====================================================\n");
+    printf("                 🏆 BEST CHALLENGE\n");
+    printf("====================================================\n");
+
+    if (bestTime < 0)
+    {
+        printf("\nNo challenge completed yet.\n");
+    }
+    else
+    {
+        printf(
+            "\nBest time : %.0f seconds\n",
+            bestTime
+        );
+
+        printf(
+            "Best moves: %d\n",
+            bestMoves
+        );
+    }
+
+    printf("\n====================================================\n");
+}
+
+
+/* ============================================================
+   MAIN
+   ============================================================ */
 
 int main()
 {
@@ -1117,7 +947,7 @@ int main()
 
     printf("\n");
     printf("================================================================\n");
-    printf("             RUBIK'S CUBE MOVE SIMULATOR V2.2\n");
+    printf("             RUBIK'S CUBE MOVE SIMULATOR V2.3\n");
     printf("================================================================\n");
 
     printf("\n");
@@ -1125,17 +955,12 @@ int main()
     printf("⏱️  Solving timer\n");
     printf("📜 Move history\n");
     printf("↩️  Undo system\n");
-    printf("🎲 Random scramble\n");
+    printf("🎲 Challenge mode\n");
+    printf("🏆 Best score\n");
     printf("✅ Solved detection\n");
 
     displayHelp();
-
     displayCube();
-
-
-    // ========================================================
-    // MAIN LOOP
-    // ========================================================
 
     while (1)
     {
@@ -1144,27 +969,24 @@ int main()
             moveCount + 1
         );
 
-        if (fgets(
+        if (
+            fgets(
                 input,
                 sizeof(input),
                 stdin
-            ) == NULL)
+            ) == NULL
+        )
         {
             break;
         }
 
-        input[strcspn(
-            input,
-            "\n"
-        )] = '\0';
+        input[strcspn(input, "\n")] = '\0';
 
         if (strlen(input) == 0)
             continue;
 
 
-        // ----------------------------------------------------
-        // QUIT
-        // ----------------------------------------------------
+        /* QUIT */
 
         if (
             strcmp(input, "Q") == 0 ||
@@ -1174,31 +996,19 @@ int main()
             printf("\n");
             printf("====================================================\n");
             printf(
-                "Thank you for using Rubik's Cube Simulator V2.2!\n"
+                "Thank you for using Rubik's Cube Simulator V2.3!\n"
             );
-
             printf(
                 "Total moves: %d\n",
                 moveCount
             );
-
-            if (timerRunning)
-            {
-                printf(
-                    "Current time: %.0f seconds\n",
-                    getElapsedTime()
-                );
-            }
-
             printf("====================================================\n");
 
             break;
         }
 
 
-        // ----------------------------------------------------
-        // SHOW CUBE
-        // ----------------------------------------------------
+        /* SHOW */
 
         else if (
             strcmp(input, "S") == 0 ||
@@ -1209,9 +1019,7 @@ int main()
         }
 
 
-        // ----------------------------------------------------
-        // HELP
-        // ----------------------------------------------------
+        /* HELP */
 
         else if (
             strcmp(input, "H") == 0 ||
@@ -1222,9 +1030,7 @@ int main()
         }
 
 
-        // ----------------------------------------------------
-        // RESET
-        // ----------------------------------------------------
+        /* RESET */
 
         else if (
             strcmp(input, "X") == 0 ||
@@ -1232,21 +1038,18 @@ int main()
         )
         {
             initializeCube();
-
             resetSession();
+            challengeMode = 0;
 
-            printf("\n");
             printf(
-                "Cube, timer and move history reset!\n"
+                "\nCube, timer and move history reset!\n"
             );
 
             displayCube();
         }
 
 
-        // ----------------------------------------------------
-        // CHECK SOLVED
-        // ----------------------------------------------------
+        /* CHECK */
 
         else if (
             strcmp(input, "C") == 0 ||
@@ -1255,21 +1058,12 @@ int main()
         {
             if (isSolved())
             {
-                double finalTime =
-                    stopTimer();
+                double finalTime = stopTimer();
 
                 printf("\n");
-                printf(
-                    "====================================================\n"
-                );
-
-                printf(
-                    "              🎉 CUBE IS SOLVED! 🎉\n"
-                );
-
-                printf(
-                    "====================================================\n"
-                );
+                printf("====================================================\n");
+                printf("              🎉 CUBE IS SOLVED! 🎉\n");
+                printf("====================================================\n");
 
                 printf(
                     "⏱️  Solve time : %.0f seconds\n",
@@ -1281,38 +1075,22 @@ int main()
                     moveCount
                 );
 
-                if (finalTime > 0)
-                {
-                    printf(
-                        "⚡ Moves/sec  : %.2f\n",
-                        moveCount / finalTime
-                    );
-                }
-
-                printf(
-                    "====================================================\n"
-                );
+                printf("====================================================\n");
             }
             else
             {
-                printf(
-                    "\nCube is NOT solved.\n"
-                );
+                printf("\nCube is NOT solved.\n");
 
                 if (timerRunning)
-                {
                     printf(
                         "⏱️  Current time: %.0f seconds\n",
                         getElapsedTime()
                     );
-                }
             }
         }
 
 
-        // ----------------------------------------------------
-        // MOVE HISTORY
-        // ----------------------------------------------------
+        /* HISTORY */
 
         else if (
             strcmp(input, "M") == 0 ||
@@ -1323,9 +1101,7 @@ int main()
         }
 
 
-        // ----------------------------------------------------
-        // UNDO
-        // ----------------------------------------------------
+        /* UNDO */
 
         else if (
             strcmp(input, "UNDO") == 0 ||
@@ -1336,74 +1112,42 @@ int main()
         }
 
 
-        // ----------------------------------------------------
-        // SCRAMBLE
-        // ----------------------------------------------------
+        /* CHALLENGE */
 
         else if (
             strcmp(input, "G") == 0 ||
             strcmp(input, "g") == 0
         )
         {
-            int length;
-
-            printf(
-                "Enter scramble length: "
-            );
-
-            if (
-                fgets(
-                    input,
-                    sizeof(input),
-                    stdin
-                ) != NULL
-            )
-            {
-                length = atoi(input);
-
-                if (length <= 0)
-                {
-                    printf(
-                        "Invalid scramble length.\n"
-                    );
-                }
-                else
-                {
-                    generateScramble(
-                        length
-                    );
-
-                    displayCube();
-                }
-            }
+            startChallenge();
         }
 
 
-        // ----------------------------------------------------
-        // NORMAL MOVES
-        // ----------------------------------------------------
+        /* BEST */
+
+        else if (
+            strcmp(input, "BEST") == 0 ||
+            strcmp(input, "best") == 0
+        )
+        {
+            displayBestScore();
+        }
+
+
+        /* NORMAL MOVES */
 
         else
         {
             processMoves(input);
 
-            if (isSolved())
+            if (!challengeMode && isSolved())
             {
-                double finalTime =
-                    stopTimer();
+                double finalTime = stopTimer();
 
                 printf("\n");
-                printf(
-                    "====================================================\n"
-                );
-
-                printf(
-                    "              🎉 CUBE IS SOLVED! 🎉\n"
-                );
-
-                printf(
-                    "====================================================\n"
-                );
+                printf("====================================================\n");
+                printf("              🎉 CUBE IS SOLVED! 🎉\n");
+                printf("====================================================\n");
 
                 printf(
                     "⏱️  Solve time : %.0f seconds\n",
@@ -1415,17 +1159,7 @@ int main()
                     moveCount
                 );
 
-                if (finalTime > 0)
-                {
-                    printf(
-                        "⚡ Moves/sec  : %.2f\n",
-                        moveCount / finalTime
-                    );
-                }
-
-                printf(
-                    "====================================================\n"
-                );
+                printf("====================================================\n");
             }
 
             displayCube();
