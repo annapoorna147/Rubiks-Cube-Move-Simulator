@@ -8,3 +8,6 @@ rubiks_cube
 *.o
 rubiks_cube
 build/
+
+# Test executables
+tests/test_*
