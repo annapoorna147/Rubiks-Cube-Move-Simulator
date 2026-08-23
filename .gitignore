@@ -1,2 +1,10 @@
 .DS_Store
 rubiks_cube
+
+# macOS
+.DS_Store
+
+# C build files
+*.o
+rubiks_cube
+build/
