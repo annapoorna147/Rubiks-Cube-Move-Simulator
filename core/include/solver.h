@@ -19,10 +19,13 @@ typedef enum
 } SolverStep;
 
 
+/* ============================================================
+   SOLVER SOLUTION
+   ============================================================ */
+
 typedef struct
 {
     char moves[SOLVER_MAX_MOVES][SOLVER_MOVE_LENGTH];
-
     int move_count;
 } SolverSolution;
 
@@ -49,7 +52,22 @@ typedef enum
     WHITE_EDGE_FL,
     WHITE_EDGE_BR,
     WHITE_EDGE_BL
+
 } WhiteEdgeLocation;
+
+
+/* ============================================================
+   WHITE EDGE INFORMATION
+   ============================================================ */
+
+typedef struct
+{
+    WhiteEdgeLocation location;
+
+    char white_color;
+    char side_color;
+
+} WhiteEdgeInfo;
 
 
 /* ============================================================
@@ -81,7 +99,7 @@ int solver_step_complete(
 
 
 /* ============================================================
-   BEGINNER METHOD RECOGNITION
+   WHITE CROSS RECOGNITION
    ============================================================ */
 
 int solver_white_cross_complete(
@@ -93,36 +111,74 @@ int solver_white_cross_complete(
    WHITE EDGE LOCATOR
    ============================================================ */
 
-/*
- * Find a White edge piece.
- *
- * Returns the location of the first White edge found.
- */
 WhiteEdgeLocation solver_find_white_edge(
     const RubixCube *cube
 );
 
-
-/*
- * Return a readable name for an edge location.
- */
 const char *solver_white_edge_name(
     WhiteEdgeLocation location
 );
 
-
-/*
- * Count how many White edge pieces exist.
- */
 int solver_count_white_edges(
     const RubixCube *cube
 );
 
-#endif
 
-/* White edge solved-state detection */
+/* ============================================================
+   WHITE EDGE INFORMATION
+   ============================================================ */
+
+WhiteEdgeInfo solver_get_white_edge_info(
+    const RubixCube *cube,
+    WhiteEdgeLocation location
+);
+
+
+/* ============================================================
+   WHITE EDGE SOLVED DETECTION
+   ============================================================ */
+
 int solver_white_edge_solved(
     const RubixCube *cube,
     WhiteEdgeLocation location
 );
 
+
+/* ============================================================
+   WHITE CROSS TARGET
+   ============================================================ */
+
+/*
+ * Determine the correct White Cross slot for a White edge.
+ *
+ * Example:
+ *
+ * White + Green  -> UF
+ * White + Red    -> UR
+ * White + Blue   -> UB
+ * White + Orange -> UL
+ *
+ * Returns WHITE_EDGE_NONE if the target cannot be determined.
+ */
+WhiteEdgeLocation solver_white_edge_target(
+    const RubixCube *cube,
+    WhiteEdgeLocation location
+);
+
+
+/* ============================================================
+   WHITE CROSS MOVE PLANNER
+   ============================================================ */
+
+/*
+ * Return the basic move associated with a White edge location.
+ *
+ * This is an initial planning interface.
+ * Full state-aware planning will be added later.
+ */
+const char *solver_white_edge_next_move(
+    WhiteEdgeLocation location
+);
+
+
+#endif
