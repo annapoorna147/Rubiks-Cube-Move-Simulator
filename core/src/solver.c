@@ -347,6 +347,59 @@ WhiteEdgeLocation solver_find_white_edge(
    WHITE EDGE NAME
    ============================================================ */
 
+
+/* ============================================================
+   FIND WHITE EDGE BY SIDE COLOR
+   ============================================================ */
+
+WhiteEdgeLocation solver_find_white_edge_by_color(
+    const RubixCube *cube,
+    char side_color
+)
+{
+    if (cube == NULL)
+        return WHITE_EDGE_NONE;
+
+    WhiteEdgeLocation locations[] =
+    {
+        WHITE_EDGE_UF,
+        WHITE_EDGE_UR,
+        WHITE_EDGE_UB,
+        WHITE_EDGE_UL,
+
+        WHITE_EDGE_DF,
+        WHITE_EDGE_DR,
+        WHITE_EDGE_DB,
+        WHITE_EDGE_DL,
+
+        WHITE_EDGE_FR,
+        WHITE_EDGE_FL,
+        WHITE_EDGE_BR,
+        WHITE_EDGE_BL
+    };
+
+    int count =
+        sizeof(locations) / sizeof(locations[0]);
+
+    for (int i = 0; i < count; i++)
+    {
+        WhiteEdgeInfo info =
+            solver_get_white_edge_info(
+                cube,
+                locations[i]
+            );
+
+        if (info.white_color == 'W' &&
+            info.side_color == side_color)
+        {
+            return locations[i];
+        }
+    }
+
+    return WHITE_EDGE_NONE;
+}
+
+
 const char *solver_white_edge_name(
     WhiteEdgeLocation location
 )
@@ -413,76 +466,94 @@ WhiteEdgeInfo solver_get_white_edge_info(
     if (cube == NULL)
         return info;
 
+    char a = '\0';
+    char b = '\0';
+
     switch (location)
     {
         case WHITE_EDGE_UF:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[2][0][1];
+            a = cube->stickers[0][2][1];
+            b = cube->stickers[2][0][1];
             break;
 
         case WHITE_EDGE_UR:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[5][0][1];
+            a = cube->stickers[0][1][2];
+            b = cube->stickers[5][0][1];
             break;
 
         case WHITE_EDGE_UB:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[3][0][1];
+            a = cube->stickers[0][0][1];
+            b = cube->stickers[3][0][1];
             break;
 
         case WHITE_EDGE_UL:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[4][0][1];
+            a = cube->stickers[0][1][0];
+            b = cube->stickers[4][0][1];
             break;
 
         case WHITE_EDGE_DF:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[2][2][1];
+            a = cube->stickers[1][0][1];
+            b = cube->stickers[2][2][1];
             break;
 
         case WHITE_EDGE_DR:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[5][2][1];
+            a = cube->stickers[1][1][2];
+            b = cube->stickers[5][2][1];
             break;
 
         case WHITE_EDGE_DB:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[3][2][1];
+            a = cube->stickers[1][2][1];
+            b = cube->stickers[3][2][1];
             break;
 
         case WHITE_EDGE_DL:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[4][2][1];
+            a = cube->stickers[1][1][0];
+            b = cube->stickers[4][2][1];
             break;
 
         case WHITE_EDGE_FR:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[2][1][2];
+            a = cube->stickers[2][1][2];
+            b = cube->stickers[5][1][0];
             break;
 
         case WHITE_EDGE_FL:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[2][1][0];
+            a = cube->stickers[2][1][0];
+            b = cube->stickers[4][1][2];
             break;
 
         case WHITE_EDGE_BR:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[3][1][0];
+            a = cube->stickers[3][1][0];
+            b = cube->stickers[5][1][2];
             break;
 
         case WHITE_EDGE_BL:
-            info.white_color = 'W';
-            info.side_color = cube->stickers[3][1][2];
+            a = cube->stickers[3][1][2];
+            b = cube->stickers[4][1][0];
             break;
 
         case WHITE_EDGE_NONE:
         default:
-            break;
+            return info;
+    }
+
+    /*
+     * Identify which sticker is White.
+     *
+     * The other sticker is the side color.
+     */
+    if (a == 'W')
+    {
+        info.white_color = a;
+        info.side_color = b;
+    }
+    else if (b == 'W')
+    {
+        info.white_color = b;
+        info.side_color = a;
     }
 
     return info;
 }
-
 
 /* ============================================================
    COUNT WHITE EDGES
@@ -694,5 +765,49 @@ const char *solver_white_edge_next_move(
         case WHITE_EDGE_NONE:
         default:
             return "";
+    }
+}
+
+/* ============================================================
+   WHITE CROSS TARGET
+   ============================================================ */
+
+WhiteEdgeLocation solver_white_edge_target(
+    const RubixCube *cube,
+    WhiteEdgeLocation location
+)
+{
+    if (cube == NULL)
+        return WHITE_EDGE_NONE;
+
+    WhiteEdgeInfo info =
+        solver_get_white_edge_info(cube, location);
+
+    /*
+     * The side color determines the correct
+     * White Cross position.
+     *
+     * Green  -> UF
+     * Red    -> UR
+     * Blue   -> UB
+     * Orange -> UL
+     */
+
+    switch (info.side_color)
+    {
+        case 'G':
+            return WHITE_EDGE_UF;
+
+        case 'R':
+            return WHITE_EDGE_UR;
+
+        case 'B':
+            return WHITE_EDGE_UB;
+
+        case 'O':
+            return WHITE_EDGE_UL;
+
+        default:
+            return WHITE_EDGE_NONE;
     }
 }
