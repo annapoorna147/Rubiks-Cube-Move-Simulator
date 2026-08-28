@@ -811,3 +811,109 @@ WhiteEdgeLocation solver_white_edge_target(
             return WHITE_EDGE_NONE;
     }
 }
+
+
+/* ============================================================
+   WHITE CROSS EDGE PLANNER
+   ============================================================ */
+
+/*
+ * Determine the first move needed to bring a White edge
+ * toward its correct White Cross position.
+ *
+ * This is the first state-aware planning layer.
+ */
+const char *solver_white_cross_plan_move(
+    const RubixCube *cube,
+    char side_color
+)
+{
+    if (cube == NULL)
+        return "";
+
+    WhiteEdgeLocation location =
+        solver_find_white_edge_by_color(cube, side_color);
+
+    if (location == WHITE_EDGE_NONE)
+        return "";
+
+    /*
+     * If this White edge is already solved,
+     * no move is required.
+     */
+    if (solver_white_edge_solved(cube, location))
+        return "";
+
+    /*
+     * For Down-layer edges, a double turn brings
+     * the edge toward the White Cross.
+     */
+    switch (location)
+    {
+        case WHITE_EDGE_DF:
+            return "F2";
+
+        case WHITE_EDGE_DR:
+            return "R2";
+
+        case WHITE_EDGE_DB:
+            return "B2";
+
+        case WHITE_EDGE_DL:
+            return "L2";
+
+        /*
+         * Middle-layer edges need to be moved out
+         * toward the appropriate face.
+         */
+        case WHITE_EDGE_FR:
+            return "F";
+
+        case WHITE_EDGE_FL:
+            return "F'";
+
+        case WHITE_EDGE_BR:
+            return "B";
+
+        case WHITE_EDGE_BL:
+            return "B'";
+
+        /*
+         * Top-layer edges are handled by rotating
+         * the U layer toward their target position.
+         */
+        case WHITE_EDGE_UF:
+        case WHITE_EDGE_UR:
+        case WHITE_EDGE_UB:
+        case WHITE_EDGE_UL:
+        {
+            WhiteEdgeLocation target =
+                solver_white_edge_target(cube, location);
+
+            if (target == location)
+                return "";
+
+            switch (target)
+            {
+                case WHITE_EDGE_UF:
+                    return "U";
+
+                case WHITE_EDGE_UR:
+                    return "U";
+
+                case WHITE_EDGE_UB:
+                    return "U2";
+
+                case WHITE_EDGE_UL:
+                    return "U'";
+
+                default:
+                    return "";
+            }
+        }
+
+        case WHITE_EDGE_NONE:
+        default:
+            return "";
+    }
+}

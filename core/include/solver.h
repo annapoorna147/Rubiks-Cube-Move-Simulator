@@ -174,4 +174,17 @@ WhiteEdgeLocation solver_white_edge_target(
     WhiteEdgeLocation location
 );
 
+/* ============================================================
+   WHITE CROSS EDGE PLANNER
+   ============================================================ */
+
+/*
+ * Determine the first move needed to place a White edge
+ * toward its target White Cross slot.
+ */
+const char *solver_white_cross_plan_move(
+    const RubixCube *cube,
+    char side_color
+);
+
 #endif
