@@ -1,6 +1,7 @@
 #include <stddef.h>
 
 #include "solver.h"
+#include "moves.h"
 
 
 /* ============================================================
@@ -916,4 +917,154 @@ const char *solver_white_cross_plan_move(
         default:
             return "";
     }
+}
+
+
+/* ============================================================
+   WHITE CROSS SOLVER
+   ============================================================ */
+
+static int solver_apply_white_cross_move(
+    RubixCube *cube,
+    SolverSolution *solution,
+    char side_color
+)
+{
+    if (cube == NULL || solution == NULL)
+        return 0;
+
+    const char *move =
+        solver_white_cross_plan_move(cube, side_color);
+
+    if (move == NULL || move[0] == '\0')
+    {
+        WhiteEdgeLocation location =
+            solver_find_white_edge_by_color(cube, side_color);
+
+        if (solver_white_edge_solved(cube, location))
+            return 1;
+
+        return 0;
+    }
+
+    if (solution->move_count >= SOLVER_MAX_MOVES)
+        return 0;
+
+    if (!cube_apply_move(cube, move))
+        return 0;
+
+    int i = 0;
+
+    while (move[i] != '\0' &&
+           i < SOLVER_MOVE_LENGTH - 1)
+    {
+        solution->moves[
+            solution->move_count
+        ][i] = move[i];
+
+        i++;
+    }
+
+    solution->moves[
+        solution->move_count
+    ][i] = '\0';
+
+    solution->move_count++;
+
+    return 1;
+}
+
+
+/* ============================================================
+   SOLVE ONE WHITE EDGE
+   ============================================================ */
+
+static int solver_solve_white_edge(
+    RubixCube *cube,
+    SolverSolution *solution,
+    char side_color
+)
+{
+    if (cube == NULL || solution == NULL)
+        return 0;
+
+    for (int attempt = 0; attempt < 20; attempt++)
+    {
+        WhiteEdgeLocation location =
+            solver_find_white_edge_by_color(
+                cube,
+                side_color
+            );
+
+        if (location == WHITE_EDGE_NONE)
+            return 0;
+
+        if (solver_white_edge_solved(
+                cube,
+                location))
+        {
+            return 1;
+        }
+
+        const char *move =
+            solver_white_cross_plan_move(
+                cube,
+                side_color
+            );
+
+        if (move == NULL || move[0] == '\0')
+            return 0;
+
+        if (!solver_apply_white_cross_move(
+                cube,
+                solution,
+                side_color))
+        {
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+
+/* ============================================================
+   SOLVE WHITE CROSS
+   ============================================================ */
+
+int solver_solve_white_cross(
+    RubixCube *cube,
+    SolverSolution *solution
+)
+{
+    if (cube == NULL || solution == NULL)
+        return 0;
+
+    solver_solution_init(solution);
+
+    const char side_colors[4] =
+    {
+        'G',
+        'R',
+        'B',
+        'O'
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (!solver_solve_white_edge(
+                cube,
+                solution,
+                side_colors[i]))
+        {
+            return 0;
+        }
+    }
+
+    if (!solver_white_cross_complete(cube))
+        return 0;
+
+    solution->step = SOLVER_STEP_WHITE_CORNERS;
+
+    return 1;
 }

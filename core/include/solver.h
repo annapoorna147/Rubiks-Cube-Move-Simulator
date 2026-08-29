@@ -6,6 +6,11 @@
 #define SOLVER_MAX_MOVES 1000
 #define SOLVER_MOVE_LENGTH 4
 
+
+/* ============================================================
+   SOLVER STEPS
+   ============================================================ */
+
 typedef enum
 {
     SOLVER_STEP_WHITE_CROSS = 0,
@@ -19,10 +24,15 @@ typedef enum
 } SolverStep;
 
 
+/* ============================================================
+   SOLVER SOLUTION
+   ============================================================ */
+
 typedef struct
 {
     char moves[SOLVER_MAX_MOVES][SOLVER_MOVE_LENGTH];
     int move_count;
+    SolverStep step;
 } SolverSolution;
 
 
@@ -48,6 +58,7 @@ typedef enum
     WHITE_EDGE_FL,
     WHITE_EDGE_BR,
     WHITE_EDGE_BL
+
 } WhiteEdgeLocation;
 
 
@@ -97,32 +108,29 @@ WhiteEdgeLocation solver_find_white_edge(
 );
 
 
-/*
- * Find a White edge using its side color.
- *
- * Example:
- *     'G' -> White/Green edge
- *     'R' -> White/Red edge
- *     'B' -> White/Blue edge
- *     'O' -> White/Orange edge
- */
+/* ============================================================
+   WHITE EDGE BY COLOR
+   ============================================================ */
+
 WhiteEdgeLocation solver_find_white_edge_by_color(
     const RubixCube *cube,
     char side_color
 );
 
 
-/*
- * Return a readable edge name.
- */
+/* ============================================================
+   WHITE EDGE NAME
+   ============================================================ */
+
 const char *solver_white_edge_name(
     WhiteEdgeLocation location
 );
 
 
-/*
- * Count White edge pieces.
- */
+/* ============================================================
+   WHITE EDGE COUNT
+   ============================================================ */
+
 int solver_count_white_edges(
     const RubixCube *cube
 );
@@ -174,6 +182,7 @@ WhiteEdgeLocation solver_white_edge_target(
     WhiteEdgeLocation location
 );
 
+
 /* ============================================================
    WHITE CROSS EDGE PLANNER
    ============================================================ */
@@ -186,5 +195,23 @@ const char *solver_white_cross_plan_move(
     const RubixCube *cube,
     char side_color
 );
+
+
+/* ============================================================
+   WHITE CROSS SOLVER
+   ============================================================ */
+
+/*
+ * Solve the White Cross for all four White edges.
+ *
+ * Returns:
+ *     1 = White Cross solved
+ *     0 = failed
+ */
+int solver_solve_white_cross(
+    RubixCube *cube,
+    SolverSolution *solution
+);
+
 
 #endif
