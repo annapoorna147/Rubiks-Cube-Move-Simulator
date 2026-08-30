@@ -214,4 +214,54 @@ int solver_solve_white_cross(
 );
 
 
+
+/* ============================================================
+   WHITE CORNER LOCATIONS
+   ============================================================ */
+
+typedef enum
+{
+    WHITE_CORNER_NONE = 0,
+
+    WHITE_CORNER_UFR,
+    WHITE_CORNER_URB,
+    WHITE_CORNER_UBL,
+    WHITE_CORNER_ULF,
+
+    WHITE_CORNER_DFR,
+    WHITE_CORNER_DRB,
+    WHITE_CORNER_DBL,
+    WHITE_CORNER_DLF
+
+} WhiteCornerLocation;
+
+
+/* ============================================================
+   WHITE CORNER RECOGNITION
+   ============================================================ */
+
+WhiteCornerLocation solver_find_white_corner(
+    const RubixCube *cube
+);
+
+WhiteCornerLocation solver_find_white_corner_by_colors(
+    const RubixCube *cube,
+    char color1,
+    char color2
+);
+
+const char *solver_white_corner_name(
+    WhiteCornerLocation location
+);
+
+
+/* ============================================================
+   WHITE CORNER SOLVED DETECTION
+   ============================================================ */
+
+int solver_white_corner_solved(
+    const RubixCube *cube,
+    WhiteCornerLocation location
+);
+
 #endif

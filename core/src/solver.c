@@ -1068,3 +1068,369 @@ int solver_solve_white_cross(
 
     return 1;
 }
+
+
+/* ============================================================
+   WHITE CORNER RECOGNITION
+   ============================================================ */
+
+static int is_white_corner(
+    char a,
+    char b,
+    char c
+)
+{
+    int white_count = 0;
+
+    if (a == 'W')
+        white_count++;
+
+    if (b == 'W')
+        white_count++;
+
+    if (c == 'W')
+        white_count++;
+
+    return white_count == 1;
+}
+
+
+WhiteCornerLocation solver_find_white_corner(
+    const RubixCube *cube
+)
+{
+    if (cube == NULL)
+        return WHITE_CORNER_NONE;
+
+    /*
+     * UFR
+     */
+    if (is_white_corner(
+            cube->stickers[0][2][2],
+            cube->stickers[2][0][2],
+            cube->stickers[5][0][0]))
+    {
+        return WHITE_CORNER_UFR;
+    }
+
+    /*
+     * URB
+     */
+    if (is_white_corner(
+            cube->stickers[0][0][2],
+            cube->stickers[5][0][2],
+            cube->stickers[3][0][0]))
+    {
+        return WHITE_CORNER_URB;
+    }
+
+    /*
+     * UBL
+     */
+    if (is_white_corner(
+            cube->stickers[0][0][0],
+            cube->stickers[3][0][2],
+            cube->stickers[4][0][0]))
+    {
+        return WHITE_CORNER_UBL;
+    }
+
+    /*
+     * ULF
+     */
+    if (is_white_corner(
+            cube->stickers[0][2][0],
+            cube->stickers[4][0][2],
+            cube->stickers[2][0][0]))
+    {
+        return WHITE_CORNER_ULF;
+    }
+
+    /*
+     * DFR
+     */
+    if (is_white_corner(
+            cube->stickers[1][0][2],
+            cube->stickers[2][2][2],
+            cube->stickers[5][2][0]))
+    {
+        return WHITE_CORNER_DFR;
+    }
+
+    /*
+     * DRB
+     */
+    if (is_white_corner(
+            cube->stickers[1][2][2],
+            cube->stickers[5][2][2],
+            cube->stickers[3][2][0]))
+    {
+        return WHITE_CORNER_DRB;
+    }
+
+    /*
+     * DBL
+     */
+    if (is_white_corner(
+            cube->stickers[1][2][0],
+            cube->stickers[3][2][2],
+            cube->stickers[4][2][0]))
+    {
+        return WHITE_CORNER_DBL;
+    }
+
+    /*
+     * DLF
+     */
+    if (is_white_corner(
+            cube->stickers[1][0][0],
+            cube->stickers[4][2][2],
+            cube->stickers[2][2][0]))
+    {
+        return WHITE_CORNER_DLF;
+    }
+
+    return WHITE_CORNER_NONE;
+}
+
+
+const char *solver_white_corner_name(
+    WhiteCornerLocation location
+)
+{
+    switch (location)
+    {
+        case WHITE_CORNER_UFR:
+            return "UFR";
+
+        case WHITE_CORNER_URB:
+            return "URB";
+
+        case WHITE_CORNER_UBL:
+            return "UBL";
+
+        case WHITE_CORNER_ULF:
+            return "ULF";
+
+        case WHITE_CORNER_DFR:
+            return "DFR";
+
+        case WHITE_CORNER_DRB:
+            return "DRB";
+
+        case WHITE_CORNER_DBL:
+            return "DBL";
+
+        case WHITE_CORNER_DLF:
+            return "DLF";
+
+        case WHITE_CORNER_NONE:
+        default:
+            return "NONE";
+    }
+}
+
+
+
+/* ============================================================
+   WHITE CORNER BY COLORS
+   ============================================================ */
+
+/*
+ * Find a White corner containing the requested two side colors.
+ *
+ * Example:
+ *
+ *     color1 = G
+ *     color2 = R
+ *
+ * finds the White-Green-Red corner.
+ *
+ * The order of color1/color2 does not matter.
+ */
+
+static int corner_has_colors(
+    char a,
+    char b,
+    char c,
+    char color1,
+    char color2
+)
+{
+    if (a != 'W' && b != 'W' && c != 'W')
+        return 0;
+
+    int found_color1 =
+        (a == color1 || b == color1 || c == color1);
+
+    int found_color2 =
+        (a == color2 || b == color2 || c == color2);
+
+    return found_color1 && found_color2;
+}
+
+
+WhiteCornerLocation solver_find_white_corner_by_colors(
+    const RubixCube *cube,
+    char color1,
+    char color2
+)
+{
+    if (cube == NULL)
+        return WHITE_CORNER_NONE;
+
+    /*
+     * UFR = White / Green / Red
+     */
+    if (corner_has_colors(
+            cube->stickers[0][2][2],
+            cube->stickers[2][0][2],
+            cube->stickers[5][0][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_UFR;
+    }
+
+    /*
+     * URB = White / Red / Blue
+     */
+    if (corner_has_colors(
+            cube->stickers[0][0][2],
+            cube->stickers[5][0][2],
+            cube->stickers[3][0][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_URB;
+    }
+
+    /*
+     * UBL = White / Blue / Orange
+     */
+    if (corner_has_colors(
+            cube->stickers[0][0][0],
+            cube->stickers[3][0][2],
+            cube->stickers[4][0][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_UBL;
+    }
+
+    /*
+     * ULF = White / Orange / Green
+     */
+    if (corner_has_colors(
+            cube->stickers[0][2][0],
+            cube->stickers[4][0][2],
+            cube->stickers[2][0][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_ULF;
+    }
+
+    /*
+     * DFR = White / Green / Red
+     */
+    if (corner_has_colors(
+            cube->stickers[1][0][2],
+            cube->stickers[2][2][2],
+            cube->stickers[5][2][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_DFR;
+    }
+
+    /*
+     * DRB = White / Red / Blue
+     */
+    if (corner_has_colors(
+            cube->stickers[1][2][2],
+            cube->stickers[5][2][2],
+            cube->stickers[3][2][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_DRB;
+    }
+
+    /*
+     * DBL = White / Blue / Orange
+     */
+    if (corner_has_colors(
+            cube->stickers[1][2][0],
+            cube->stickers[3][2][2],
+            cube->stickers[4][2][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_DBL;
+    }
+
+    /*
+     * DLF = White / Orange / Green
+     */
+    if (corner_has_colors(
+            cube->stickers[1][0][0],
+            cube->stickers[4][2][2],
+            cube->stickers[2][2][0],
+            color1,
+            color2))
+    {
+        return WHITE_CORNER_DLF;
+    }
+
+    return WHITE_CORNER_NONE;
+}
+
+
+/* ============================================================
+   WHITE CORNER SOLVED DETECTION
+   ============================================================ */
+
+int solver_white_corner_solved(
+    const RubixCube *cube,
+    WhiteCornerLocation location
+)
+{
+    if (cube == NULL)
+        return 0;
+
+    switch (location)
+    {
+        case WHITE_CORNER_UFR:
+            return
+                cube->stickers[0][2][2] == 'W' &&
+                cube->stickers[2][0][2] == 'G' &&
+                cube->stickers[5][0][0] == 'R';
+
+        case WHITE_CORNER_URB:
+            return
+                cube->stickers[0][0][2] == 'W' &&
+                cube->stickers[5][0][2] == 'R' &&
+                cube->stickers[3][0][0] == 'B';
+
+        case WHITE_CORNER_UBL:
+            return
+                cube->stickers[0][0][0] == 'W' &&
+                cube->stickers[3][0][2] == 'B' &&
+                cube->stickers[4][0][0] == 'O';
+
+        case WHITE_CORNER_ULF:
+            return
+                cube->stickers[0][2][0] == 'W' &&
+                cube->stickers[4][0][2] == 'O' &&
+                cube->stickers[2][0][0] == 'G';
+
+        case WHITE_CORNER_DFR:
+        case WHITE_CORNER_DRB:
+        case WHITE_CORNER_DBL:
+        case WHITE_CORNER_DLF:
+        case WHITE_CORNER_NONE:
+        default:
+            return 0;
+    }
+}
