@@ -383,7 +383,8 @@ button:active{
 <button class="primary" onclick="scramble()">Scramble</button>
 <button onclick="undo()">Undo</button>
 <button class="reset" onclick="resetCube()">Reset Cube</button>
-<button class="reset" onclick="runEngineTests()">🧪 Test Cube Engine</button>
+<button class="reset" onclick="runEngineTestsSafe()">🧪 Test Cube Engine</button>
+<button class="reset" onclick="runCubeStateTest()">🧊 Test State Bridge</button>
 </div>
 
 <div class="info">
@@ -408,6 +409,7 @@ Space = scramble • Esc = reset
 </div>
 
 <script>
+let animating = false;
 
 const COLORS={
     U:"white",
@@ -955,113 +957,142 @@ function directMove(face,amount=1){
 }
 
 
-function runEngineTests(){
 
-    if(animating){
-        alert("Finish the current move first.");
-        return;
-    }
+function runEngineTestsSafe(){
 
-    resetCube();
+    try {
 
-    const original=snapshotCube();
-
-    const tests=[];
-
-    /*
-     * Four identical quarter turns
-     */
-
-    ["R","U","F","D","L","B"].forEach(face=>{
-
-        resetCube();
-
-        for(let i=0;i<4;i++){
-            directMove(face);
+        if(typeof runEngineTests !== "function"){
+            throw new Error("runEngineTests() is not available.");
         }
 
-        tests.push({
-            name:`${face} × 4`,
-            pass:snapshotCube()===original
-        });
-    });
+        runEngineTests();
 
-
-    /*
-     * Move followed by inverse
-     */
-
-    [
-        ["R",3],
-        ["U",3],
-        ["F",3],
-        ["D",3],
-        ["L",3],
-        ["B",3]
-    ].forEach(([face,inverse])=>{
-
-        resetCube();
-
-        directMove(face);
-        directMove(face,inverse);
-
-        tests.push({
-            name:`${face} + ${face}′`,
-            pass:snapshotCube()===original
-        });
-    });
-
-
-    /*
-     * Double turn repeated twice
-     */
-
-    ["R","U","F"].forEach(face=>{
-
-        resetCube();
-
-        directMove(face,2);
-        directMove(face,2);
-
-        tests.push({
-            name:`${face}2 + ${face}2`,
-            pass:snapshotCube()===original
-        });
-    });
-
-
-    resetCube();
-
-    const failed=tests.filter(t=>!t.pass);
-
-    if(failed.length===0){
+    } catch(error) {
 
         alert(
-`✅ RUBIX ENGINE TEST PASSED
-
-${tests.length}/${tests.length} tests passed.
-
-The cube state is consistent for:
-• Four-turn cycles
-• Move + inverse
-• Double-turn cycles
-
-Ready for the solver foundation. 🧊`
+            "⚠️ RUBIX ENGINE ERROR\n\n" +
+            error.name + ": " +
+            error.message
         );
 
-    }else{
-
-        alert(
-`⚠️ RUBIX ENGINE NEEDS FIXING
-
-${failed.length} test(s) failed:
-
-${failed.map(t=>"• "+t.name).join("\n")}
-
-We will fix the cube engine before building the solver.`
-        );
+        console.error("RUBIX ENGINE ERROR:", error);
     }
 }
+
+
+
+
+
+function runEngineTests(){
+
+    const output = [];
+
+    try {
+
+        output.push("🧊 RUBIX ENGINE TEST");
+        output.push("====================");
+
+        if (typeof resetCube !== "function")
+            throw new Error("resetCube() missing");
+
+        if (typeof directMove !== "function")
+            throw new Error("directMove() missing");
+
+        if (typeof snapshotCube !== "function")
+            throw new Error("snapshotCube() missing");
+
+        resetCube();
+
+        const original = snapshotCube();
+
+        const faces = ["R","U","F","D","L","B"];
+
+        for (const face of faces) {
+
+            resetCube();
+
+            for (let i = 0; i < 4; i++) {
+                directMove(face);
+            }
+
+            if (snapshotCube() !== original) {
+                throw new Error(face + " × 4 failed");
+            }
+
+            output.push("✅ " + face + " × 4");
+        }
+
+        resetCube();
+
+        for (const face of ["R","U","F"]) {
+
+            directMove(face);
+            directMove(face, 3);
+
+            if (snapshotCube() !== original) {
+                throw new Error(face + " + inverse failed");
+            }
+
+            output.push("✅ " + face + " + inverse");
+
+            resetCube();
+        }
+
+        output.push("");
+        output.push("====================");
+        output.push("🎉 ENGINE TEST PASSED");
+        output.push("====================");
+
+    } catch (error) {
+
+        output.push("");
+        output.push("====================");
+        output.push("❌ ENGINE TEST FAILED");
+        output.push("====================");
+        output.push("");
+        output.push(error.name + ": " + error.message);
+
+        console.error(error);
+    }
+
+    const panel = document.createElement("div");
+
+    panel.style.position = "fixed";
+    panel.style.left = "50%";
+    panel.style.top = "50%";
+    panel.style.transform = "translate(-50%, -50%)";
+    panel.style.zIndex = "99999";
+    panel.style.background = "#111";
+    panel.style.color = "#fff";
+    panel.style.padding = "28px";
+    panel.style.borderRadius = "16px";
+    panel.style.fontFamily = "monospace";
+    panel.style.whiteSpace = "pre";
+    panel.style.lineHeight = "1.6";
+    panel.style.maxWidth = "90vw";
+    panel.style.boxShadow = "0 20px 60px rgba(0,0,0,.5)";
+
+    panel.textContent = output.join("\n");
+
+    const close = document.createElement("button");
+
+    close.textContent = "CLOSE";
+
+    close.style.display = "block";
+    close.style.marginTop = "20px";
+    close.style.padding = "10px 18px";
+    close.style.cursor = "pointer";
+
+    close.onclick = () => panel.remove();
+
+    panel.appendChild(close);
+
+    document.body.appendChild(panel);
+}
+
+
+
 
 
 /* ---------------------------------------------
@@ -1075,5 +1106,8 @@ updateUI();
 
 </script>
 
+<script src="app/cube-state.js"></script>
+<script src="app/solver.js"></script>
+<script src="tests/browser-state-test.js"></script>
 </body>
 </html>
