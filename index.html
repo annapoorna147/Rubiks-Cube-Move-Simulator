@@ -385,6 +385,7 @@ button:active{
 <button class="reset" onclick="resetCube()">Reset Cube</button>
 <button class="reset" onclick="runEngineTestsSafe()">🧪 Test Cube Engine</button>
 <button class="reset" onclick="runCubeStateTest()">🧊 Test State Bridge</button>
+<button class="reset" onclick="runRealCubeStateTest()">🔬 Test 54-Sticker State</button>
 </div>
 
 <div class="info">
@@ -423,6 +424,7 @@ const COLORS={
 const FACES=["U","R","F","D","L","B"];
 
 let cubies=[];
+window.cubies = cubies;
 let history=[];
 
 let rotationX=-27;
@@ -448,7 +450,7 @@ function createCube(){
     const cube=document.getElementById("cube");
 
     cube.innerHTML="";
-    cubies=[];
+    cubies.length=0;
 
     for(let x=-1;x<=1;x++){
         for(let y=-1;y<=1;y++){
@@ -458,13 +460,22 @@ function createCube(){
 
                 element.className="cubie";
 
+                const stickers = {
+                    front: z===1 ? COLORS.F : null,
+                    back: z===-1 ? COLORS.B : null,
+                    right: x===1 ? COLORS.R : null,
+                    left: x===-1 ? COLORS.L : null,
+                    top: y===1 ? COLORS.U : null,
+                    bottom: y===-1 ? COLORS.D : null
+                };
+
                 const faces=[
-                    ["front",z===1?COLORS.F:"black"],
-                    ["back",z===-1?COLORS.B:"black"],
-                    ["right",x===1?COLORS.R:"black"],
-                    ["left",x===-1?COLORS.L:"black"],
-                    ["top",y===1?COLORS.U:"black"],
-                    ["bottom",y===-1?COLORS.D:"black"]
+                    ["front",stickers.front],
+                    ["back",stickers.back],
+                    ["right",stickers.right],
+                    ["left",stickers.left],
+                    ["top",stickers.top],
+                    ["bottom",stickers.bottom]
                 ];
 
                 faces.forEach(([face,color])=>{
@@ -472,7 +483,7 @@ function createCube(){
                     const sticker=document.createElement("div");
 
                     sticker.className=
-                        `sticker ${face} ${color}`;
+                        `sticker ${face} ${color || "black"}`;
 
                     element.appendChild(sticker);
                 });
@@ -483,7 +494,8 @@ function createCube(){
                     x:x,
                     y:y,
                     z:z,
-                    element:element
+                    element:element,
+                    stickers:stickers
                 });
             }
         }
@@ -522,6 +534,62 @@ function updateRotation(){
 /* ---------------------------------------------
    ROTATE LAYER
 --------------------------------------------- */
+
+
+function rotateStickers(stickers, axis, direction){
+
+    const old = {
+        front: stickers.front,
+        back: stickers.back,
+        right: stickers.right,
+        left: stickers.left,
+        top: stickers.top,
+        bottom: stickers.bottom
+    };
+
+    if(axis==="x"){
+
+        if(direction===1){
+            stickers.front = old.top;
+            stickers.top = old.back;
+            stickers.back = old.bottom;
+            stickers.bottom = old.front;
+        }else{
+            stickers.front = old.bottom;
+            stickers.top = old.front;
+            stickers.back = old.top;
+            stickers.bottom = old.back;
+        }
+
+    }else if(axis==="y"){
+
+        if(direction===1){
+            stickers.front = old.left;
+            stickers.right = old.front;
+            stickers.back = old.right;
+            stickers.left = old.back;
+        }else{
+            stickers.front = old.right;
+            stickers.left = old.front;
+            stickers.back = old.left;
+            stickers.right = old.back;
+        }
+
+    }else{
+
+        if(direction===1){
+            stickers.top = old.right;
+            stickers.right = old.bottom;
+            stickers.bottom = old.left;
+            stickers.left = old.top;
+        }else{
+            stickers.top = old.left;
+            stickers.left = old.bottom;
+            stickers.bottom = old.right;
+            stickers.right = old.top;
+        }
+    }
+}
 
 function rotateLayer(face){
 
@@ -590,6 +658,8 @@ function rotateLayer(face){
                 c.y=-x;
             }
         }
+
+        rotateStickers(c.stickers, axis, direction);
     }
 
     updateCubies();
@@ -1108,6 +1178,6 @@ updateUI();
 
 <script src="app/cube-state.js"></script>
 <script src="app/solver.js"></script>
-<script src="tests/browser-state-test.js"></script>
+<script src="tests/browser-state-test.js?v=day8-2"></script>
 </body>
 </html>
