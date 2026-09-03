@@ -386,6 +386,10 @@ button:active{
 <button class="reset" onclick="runEngineTestsSafe()">🧪 Test Cube Engine</button>
 <button class="reset" onclick="runCubeStateTest()">🧊 Test State Bridge</button>
 <button class="reset" onclick="runRealCubeStateTest()">🔬 Test 54-Sticker State</button>
+<button class="reset" onclick="runAllFaceMoveTest()">🧪 Test All 6 Faces</button>
+<button class="reset" onclick="runDoubleMoveTest()">🔄 Test Double Moves</button>
+<button class="reset" onclick="runSequenceTest()">🔀 Test Move Sequence</button>
+<button class="reset" onclick="runSolvedStateTest()">🧊 Test Solved State</button>
 </div>
 
 <div class="info">
@@ -1176,7 +1180,7 @@ updateUI();
 
 </script>
 
-<script src="app/cube-state.js"></script>
+<script src="app/cube-state.js?v=day9-solved"></script>
 <script src="app/solver.js"></script>
 <script src="tests/browser-state-test.js?v=day8-2"></script>
 </body>

@@ -163,17 +163,17 @@ const RUBIX_CUBE_STATE = {
      */
     isSolved() {
 
-        if (!Array.isArray(window.cubies)) {
+        const current = this.readState();
+
+        if (!current) {
             return false;
         }
 
-        for (const cubie of window.cubies) {
+        const solved = this.createSolvedState();
 
-            if (
-                !Number.isInteger(cubie.x) ||
-                !Number.isInteger(cubie.y) ||
-                !Number.isInteger(cubie.z)
-            ) {
+        for (const face of this.faces) {
+
+            if (current[face].join("") !== solved[face].join("")) {
                 return false;
             }
         }
