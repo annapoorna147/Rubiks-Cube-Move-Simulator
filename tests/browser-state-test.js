@@ -480,3 +480,157 @@ ${passed}/${total} TESTS PASSED
 };
 
 console.log("RUBIX solved-state test loaded.");
+
+window.runSolverStateTest = function(){
+
+    const results = [];
+
+    const solverState = window.RUBIX_SOLVER_STATE;
+
+    results.push([
+        "Solver-state module loaded",
+        typeof solverState === "object"
+    ]);
+
+    results.push([
+        "8 corner positions defined",
+        Array.isArray(solverState?.corners) &&
+        solverState.corners.length === 8
+    ]);
+
+    results.push([
+        "12 edge positions defined",
+        Array.isArray(solverState?.edges) &&
+        solverState.edges.length === 12
+    ]);
+
+    const solved =
+        solverState?.createSolvedState();
+
+    results.push([
+        "Solved state contains 8 corners",
+        solved?.corners?.length === 8
+    ]);
+
+    results.push([
+        "Solved state contains 12 edges",
+        solved?.edges?.length === 12
+    ]);
+
+    results.push([
+        "All corner orientations are 0",
+        solved?.corners?.every(
+            corner => corner.orientation === 0
+        ) === true
+    ]);
+
+    results.push([
+        "All edge orientations are 0",
+        solved?.edges?.every(
+            edge => edge.orientation === 0
+        ) === true
+    ]);
+
+    const validation =
+        solverState?.validate(solved);
+
+    results.push([
+        "Solved cubie state validates",
+        validation?.valid === true
+    ]);
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🧩 SOLVER STATE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX solver-state test loaded.");
+
+
+
+window.runCornerMappingTest = function(){
+
+    const solverState = window.RUBIX_SOLVER_STATE;
+    const results = [];
+
+    results.push([
+        "Corner color map loaded",
+        typeof solverState?.cornerColors === "object"
+    ]);
+
+    const expectedCorners = {
+        UFR: ["white", "red", "green"],
+        URB: ["white", "red", "blue"],
+        UBL: ["white", "blue", "orange"],
+        ULF: ["white", "orange", "green"],
+        DFR: ["yellow", "red", "green"],
+        DRB: ["yellow", "red", "blue"],
+        DBL: ["yellow", "blue", "orange"],
+        DLF: ["yellow", "orange", "green"]
+    };
+
+    for (const [position, colors] of Object.entries(expectedCorners)) {
+        results.push([
+            `${position} corner colors defined`,
+            JSON.stringify(solverState?.cornerColors?.[position]) ===
+            JSON.stringify(colors)
+        ]);
+    }
+
+    const solved =
+        solverState?.identifyCornerPieces(
+            solverState?.createSolvedState()
+        );
+
+    results.push([
+        "8 corner entries returned",
+        Array.isArray(solved) && solved.length === 8
+    ]);
+
+    results.push([
+        "All corner positions returned",
+        solved?.every(corner =>
+            expectedCorners[corner.position] !== undefined
+        ) === true
+    ]);
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`📐 CORNER MAPPING TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX corner mapping test loaded.");

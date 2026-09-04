@@ -390,6 +390,9 @@ button:active{
 <button class="reset" onclick="runDoubleMoveTest()">🔄 Test Double Moves</button>
 <button class="reset" onclick="runSequenceTest()">🔀 Test Move Sequence</button>
 <button class="reset" onclick="runSolvedStateTest()">🧊 Test Solved State</button>
+<button class="reset" onclick="window.runSolverStateTest()">🧩 Test Solver State</button>
+<button class="reset" onclick="window.runCornerMappingTest()">📐 Test Corner Mapping</button>
+
 </div>
 
 <div class="info">
@@ -1182,6 +1185,7 @@ updateUI();
 
 <script src="app/cube-state.js?v=day9-solved"></script>
 <script src="app/solver.js"></script>
-<script src="tests/browser-state-test.js?v=day8-2"></script>
+<script src="app/solver-state.js?v=day10-2"></script>
+<script src="tests/browser-state-test.js?v=day10-3"></script>
 </body>
 </html>
