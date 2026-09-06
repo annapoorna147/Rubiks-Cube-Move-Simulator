@@ -120,3 +120,133 @@ RUBIX_SOLVER_STATE.identifyCornerPieces = function(state) {
 };
 
 console.log("RUBIX corner identification foundation loaded.");
+
+/*
+ * Corner color definitions
+ */
+RUBIX_SOLVER_STATE.cornerColors = {
+    UFR: ["white", "red", "green"],
+    URB: ["white", "red", "blue"],
+    UBL: ["white", "blue", "orange"],
+    ULF: ["white", "orange", "green"],
+    DFR: ["yellow", "red", "green"],
+    DRB: ["yellow", "red", "blue"],
+    DBL: ["yellow", "blue", "orange"],
+    DLF: ["yellow", "orange", "green"]
+};
+
+/*
+ * Sticker locations for each physical corner slot.
+ */
+RUBIX_SOLVER_STATE.cornerSlots = {
+    UFR: [["U", 8], ["R", 0], ["F", 2]],
+    URB: [["U", 2], ["R", 2], ["B", 0]],
+    UBL: [["U", 0], ["B", 2], ["L", 0]],
+    ULF: [["U", 6], ["L", 2], ["F", 0]],
+
+    DFR: [["D", 2], ["R", 6], ["F", 8]],
+    DRB: [["D", 8], ["R", 8], ["B", 6]],
+    DBL: [["D", 6], ["B", 8], ["L", 6]],
+    DLF: [["D", 0], ["L", 8], ["F", 6]]
+};
+
+/*
+ * Identify the corner piece occupying every corner slot.
+ */
+RUBIX_SOLVER_STATE.identifyCornerPieces = function(state) {
+
+    if (!state || typeof state !== "object") {
+        return null;
+    }
+
+    const faces = ["U", "R", "F", "D", "L", "B"];
+
+    for (const face of faces) {
+        if (
+            !Array.isArray(state[face]) ||
+            state[face].length !== 9
+        ) {
+            return null;
+        }
+    }
+
+    const result = [];
+
+    for (const position of this.corners) {
+
+        const slot = this.cornerSlots[position];
+
+        const colors = slot.map(([face, index]) =>
+            state[face][index]
+        );
+
+        if (colors.some(color => !color)) {
+            return null;
+        }
+
+        const sortedColors = [...colors].sort();
+
+        let piecePosition = null;
+
+        for (const [name, pieceColors] of Object.entries(this.cornerColors)) {
+
+            if (
+                JSON.stringify([...pieceColors].sort()) ===
+                JSON.stringify(sortedColors)
+            ) {
+                piecePosition = name;
+                break;
+            }
+        }
+
+        if (!piecePosition) {
+            return null;
+        }
+
+        const referenceColor =
+            colors.find(
+                color =>
+                    color === "white" ||
+                    color === "yellow"
+            );
+
+        let orientation = null;
+
+        if (referenceColor) {
+
+            const referenceIndex =
+                colors.indexOf(referenceColor);
+
+            const referenceFace =
+                slot[referenceIndex][0];
+
+            if (
+                referenceFace === "U" ||
+                referenceFace === "D"
+            ) {
+                orientation = 0;
+            } else if (
+                referenceFace === "R" ||
+                referenceFace === "L"
+            ) {
+                orientation = 1;
+            } else if (
+                referenceFace === "F" ||
+                referenceFace === "B"
+            ) {
+                orientation = 2;
+            }
+        }
+
+        result.push({
+            position: position,
+            colors: colors,
+            piece: piecePosition,
+            orientation: orientation
+        });
+    }
+
+    return result;
+};
+
+console.log("RUBIX corner recognition loaded.");
