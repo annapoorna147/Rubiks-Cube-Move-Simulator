@@ -939,3 +939,123 @@ ${passed}/${total} TESTS PASSED
 };
 
 console.log("RUBIX corner R-move test loaded.");
+
+window.runCornerOrientationTest = async function(){
+
+    const solverState = window.RUBIX_SOLVER_STATE;
+    const cubeState = window.RUBIX_CUBE_STATE;
+
+    const testCases = {
+        U: {
+            affected: ["UFR","URB","UBL","ULF"],
+            orientation: 0
+        },
+        D: {
+            affected: ["DFR","DRB","DBL","DLF"],
+            orientation: 0
+        },
+        R: {
+            affected: ["UFR","URB","DFR","DRB"],
+            orientation: 2
+        },
+        L: {
+            affected: ["UBL","ULF","DBL","DLF"],
+            orientation: 2
+        },
+        F: {
+            affected: ["UFR","ULF","DFR","DLF"],
+            orientation: 1
+        },
+        B: {
+            affected: ["URB","UBL","DRB","DBL"],
+            orientation: 1
+        }
+    };
+
+    const allCorners = [
+        "UFR","URB","UBL","ULF",
+        "DFR","DRB","DBL","DLF"
+    ];
+
+    const results = [];
+
+    for (const [moveNotation, testCase] of Object.entries(testCases)) {
+
+        createCube();
+        move(moveNotation);
+
+        await new Promise(resolve =>
+            setTimeout(resolve, 800)
+        );
+
+        const corners =
+            solverState.identifyCornerPieces(
+                cubeState.readState()
+            );
+
+        results.push([
+            `${moveNotation} returns 8 corners`,
+            Array.isArray(corners) &&
+            corners.length === 8
+        ]);
+
+        for (const position of allCorners) {
+
+            const corner =
+                corners?.find(
+                    item =>
+                        item.position === position
+                );
+
+            const expectedOrientation =
+                testCase.affected.includes(position)
+                    ? testCase.orientation
+                    : 0;
+
+            results.push([
+                `${moveNotation}: ${position} orientation`,
+                corner?.orientation === expectedOrientation
+            ]);
+        }
+    }
+
+    createCube();
+    updateUI();
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total =
+        results.length;
+
+    const message =
+        results
+            .map(result =>
+                `${result[1] ? "✅" : "❌"} ${result[0]}`
+            )
+            .join("\n");
+
+    alert(
+`🧭 CORNER ORIENTATION TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+
+    console.log(
+        "RUBIX Corner Orientation Test:",
+        `${passed}/${total} passed`
+    );
+
+    return {
+        passed: passed,
+        total: total,
+        success: passed === total,
+        results: results
+    };
+};
+
+console.log("RUBIX corner orientation test loaded.");
