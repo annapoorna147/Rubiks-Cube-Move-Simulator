@@ -250,3 +250,133 @@ RUBIX_SOLVER_STATE.identifyCornerPieces = function(state) {
 };
 
 console.log("RUBIX corner recognition loaded.");
+
+/*
+ * Edge color definitions
+ */
+RUBIX_SOLVER_STATE.edgeColors = {
+    UF: ["white", "green"],
+    UR: ["white", "red"],
+    UB: ["white", "blue"],
+    UL: ["white", "orange"],
+
+    FR: ["green", "red"],
+    BR: ["blue", "red"],
+    BL: ["blue", "orange"],
+    FL: ["green", "orange"],
+
+    DF: ["yellow", "green"],
+    DR: ["yellow", "red"],
+    DB: ["yellow", "blue"],
+    DL: ["yellow", "orange"]
+};
+
+console.log("RUBIX edge color definitions loaded.");
+
+/*
+ * Sticker locations for each physical edge slot.
+ */
+RUBIX_SOLVER_STATE.edgeSlots = {
+    UF: [["U", 7], ["F", 1]],
+    UR: [["U", 5], ["R", 1]],
+    UB: [["U", 1], ["B", 1]],
+    UL: [["U", 3], ["L", 1]],
+
+    FR: [["F", 5], ["R", 3]],
+    BR: [["B", 3], ["R", 5]],
+    BL: [["B", 5], ["L", 3]],
+    FL: [["F", 3], ["L", 5]],
+
+    DF: [["D", 1], ["F", 7]],
+    DR: [["D", 5], ["R", 7]],
+    DB: [["D", 7], ["B", 7]],
+    DL: [["D", 3], ["L", 7]]
+};
+
+console.log("RUBIX edge slot mapping loaded.");
+
+/*
+ * Identify the edge piece occupying every edge slot.
+ */
+RUBIX_SOLVER_STATE.identifyEdgePieces = function(state) {
+
+    if (!state) {
+        return null;
+    }
+
+    const result = [];
+
+    for (const position of this.edges) {
+
+        const slot = this.edgeSlots[position];
+
+        const colors = slot.map(([face, index]) =>
+            state[face][index]
+        );
+
+        let piecePosition = null;
+
+        for (const [name, pieceColors] of Object.entries(this.edgeColors)) {
+
+            const actual = [...colors].sort().join("|");
+            const expected = [...pieceColors].sort().join("|");
+
+            if (actual === expected) {
+                piecePosition = name;
+                break;
+            }
+        }
+
+        let orientation = 0;
+
+        const referenceColor =
+            colors.includes("white") ? "white" :
+            colors.includes("yellow") ? "yellow" :
+            colors.includes("green") ? "green" :
+            colors.includes("blue") ? "blue" :
+            null;
+
+        if (referenceColor === "white" || referenceColor === "yellow") {
+
+            const referenceIndex =
+                colors.indexOf(referenceColor);
+
+            const referenceFace =
+                slot[referenceIndex][0];
+
+            orientation =
+                (referenceFace === "U" ||
+                 referenceFace === "D")
+                    ? 0
+                    : 1;
+
+        } else {
+
+            const greenBlueIndex =
+                colors.findIndex(color =>
+                    color === "green" ||
+                    color === "blue"
+                );
+
+            const referenceFace =
+                slot[greenBlueIndex][0];
+
+            orientation =
+                (referenceFace === "F" ||
+                 referenceFace === "B")
+                    ? 0
+                    : 1;
+        }
+
+        result.push({
+            position: position,
+            colors: colors,
+            piece: piecePosition,
+            orientation: orientation
+        });
+    }
+
+    return result;
+};
+
+console.log("RUBIX edge recognition loaded.");
