@@ -75,6 +75,86 @@ const RUBIX_SOLVER_STATE = {
             };
         }
 
+        /*
+         * Validate corner pieces and orientations.
+         */
+        const cornerPieces = new Set();
+
+        for (const corner of state.corners) {
+
+            if (
+                !corner ||
+                !Number.isInteger(corner.piece) ||
+                corner.piece < 0 ||
+                corner.piece >= 8
+            ) {
+                return {
+                    valid: false,
+                    error: "Invalid corner piece."
+                };
+            }
+
+            if (cornerPieces.has(corner.piece)) {
+                return {
+                    valid: false,
+                    error: "Duplicate corner piece."
+                };
+            }
+
+            cornerPieces.add(corner.piece);
+
+            if (
+                !Number.isInteger(corner.orientation) ||
+                corner.orientation < 0 ||
+                corner.orientation > 2
+            ) {
+                return {
+                    valid: false,
+                    error: "Invalid corner orientation."
+                };
+            }
+        }
+
+        /*
+         * Validate edge pieces and orientations.
+         */
+        const edgePieces = new Set();
+
+        for (const edge of state.edges) {
+
+            if (
+                !edge ||
+                !Number.isInteger(edge.piece) ||
+                edge.piece < 0 ||
+                edge.piece >= 12
+            ) {
+                return {
+                    valid: false,
+                    error: "Invalid edge piece."
+                };
+            }
+
+            if (edgePieces.has(edge.piece)) {
+                return {
+                    valid: false,
+                    error: "Duplicate edge piece."
+                };
+            }
+
+            edgePieces.add(edge.piece);
+
+            if (
+                !Number.isInteger(edge.orientation) ||
+                edge.orientation < 0 ||
+                edge.orientation > 1
+            ) {
+                return {
+                    valid: false,
+                    error: "Invalid edge orientation."
+                };
+            }
+        }
+
         return {
             valid: true,
             error: null
