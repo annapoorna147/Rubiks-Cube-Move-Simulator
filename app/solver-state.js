@@ -116,6 +116,25 @@ const RUBIX_SOLVER_STATE = {
         }
 
         /*
+         * Validate corner orientation sum.
+         *
+         * A physically valid cube must have a corner
+         * orientation sum divisible by 3.
+         */
+        const cornerOrientationSum =
+            state.corners.reduce(
+                (sum, corner) => sum + corner.orientation,
+                0
+            );
+
+        if (cornerOrientationSum % 3 !== 0) {
+            return {
+                valid: false,
+                error: "Invalid corner orientation sum."
+            };
+        }
+
+        /*
          * Validate edge pieces and orientations.
          */
         const edgePieces = new Set();
@@ -153,6 +172,25 @@ const RUBIX_SOLVER_STATE = {
                     error: "Invalid edge orientation."
                 };
             }
+        }
+
+        /*
+         * Validate edge orientation sum.
+         *
+         * A physically valid cube must have an edge
+         * orientation sum divisible by 2.
+         */
+        const edgeOrientationSum =
+            state.edges.reduce(
+                (sum, edge) => sum + edge.orientation,
+                0
+            );
+
+        if (edgeOrientationSum % 2 !== 0) {
+            return {
+                valid: false,
+                error: "Invalid edge orientation sum."
+            };
         }
 
         return {
