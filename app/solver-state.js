@@ -35,6 +35,30 @@ const RUBIX_SOLVER_STATE = {
         "DL"
     ],
 
+    /*
+     * Calculate permutation parity.
+     *
+     * Returns:
+     * 0 = even permutation
+     * 1 = odd permutation
+     */
+    permutationParity(pieces) {
+
+        let inversions = 0;
+
+        for (let i = 0; i < pieces.length; i++) {
+
+            for (let j = i + 1; j < pieces.length; j++) {
+
+                if (pieces[i] > pieces[j]) {
+                    inversions++;
+                }
+            }
+        }
+
+        return inversions % 2;
+    },
+
     createSolvedState() {
 
         return {
@@ -190,6 +214,27 @@ const RUBIX_SOLVER_STATE = {
             return {
                 valid: false,
                 error: "Invalid edge orientation sum."
+            };
+        }
+
+        /*
+         * Validate permutation parity.
+         *
+         * A physically reachable Rubik's Cube must have
+         * matching corner and edge permutation parity.
+         */
+        const cornerParity = this.permutationParity(
+            state.corners.map(corner => corner.piece)
+        );
+
+        const edgeParity = this.permutationParity(
+            state.edges.map(edge => edge.piece)
+        );
+
+        if (cornerParity !== edgeParity) {
+            return {
+                valid: false,
+                error: "Invalid permutation parity."
             };
         }
 
@@ -410,8 +455,6 @@ RUBIX_SOLVER_STATE.edgeSlots = {
     DB: [["D", 7], ["B", 7]],
     DL: [["D", 3], ["L", 7]]
 };
-
-console.log("RUBIX edge slot mapping loaded.");
 
 /*
  * Identify the edge piece occupying every edge slot.
