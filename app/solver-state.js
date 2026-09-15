@@ -541,3 +541,102 @@ RUBIX_SOLVER_STATE.identifyEdgePieces = function(state) {
 };
 
 console.log("RUBIX edge recognition loaded.");
+/*
+ * Convert a 54-sticker face state into a
+ * numeric solver cubie state.
+ *
+ * Recognition identifies pieces by names such as
+ * "UFR" and "UF".
+ *
+ * The solver uses numeric piece IDs.
+ */
+RUBIX_SOLVER_STATE.createFromStickerState = function(state) {
+
+    if (!state || typeof state !== "object") {
+        return null;
+    }
+
+    const recognizedCorners =
+        this.identifyCornerPieces(state);
+
+    const recognizedEdges =
+        this.identifyEdgePieces(state);
+
+    if (!recognizedCorners || recognizedCorners.length !== 8) {
+        return null;
+    }
+
+    if (!recognizedEdges || recognizedEdges.length !== 12) {
+        return null;
+    }
+
+    const cornerPieceIds =
+        Object.fromEntries(
+            this.corners.map((name, index) => [name, index])
+        );
+
+    const edgePieceIds =
+        Object.fromEntries(
+            this.edges.map((name, index) => [name, index])
+        );
+
+    const corners = recognizedCorners.map(corner => {
+
+        if (
+            !Object.prototype.hasOwnProperty.call(
+                cornerPieceIds,
+                corner.piece
+            )
+        ) {
+            return null;
+        }
+
+        return {
+            position: corner.position,
+            piece: cornerPieceIds[corner.piece],
+            orientation: corner.orientation
+        };
+    });
+
+    const edges = recognizedEdges.map(edge => {
+
+        if (
+            !Object.prototype.hasOwnProperty.call(
+                edgePieceIds,
+                edge.piece
+            )
+        ) {
+            return null;
+        }
+
+        return {
+            position: edge.position,
+            piece: edgePieceIds[edge.piece],
+            orientation: edge.orientation
+        };
+    });
+
+    if (
+        corners.some(corner => corner === null) ||
+        edges.some(edge => edge === null)
+    ) {
+        return null;
+    }
+
+    const solverState = {
+        corners: corners,
+        edges: edges
+    };
+
+    const validation = this.validate(solverState);
+
+    if (!validation.valid) {
+        return null;
+    }
+
+    return solverState;
+};
+
+console.log(
+    "RUBIX sticker-to-solver state bridge loaded."
+);
