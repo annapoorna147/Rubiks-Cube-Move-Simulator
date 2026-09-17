@@ -31,7 +31,7 @@ const RUBIX_SOLVER = {
     },
 
     /*
-     * Return an empty 54-sticker state.
+     * Return a solved 54-sticker state.
      */
     createSolvedState() {
 
@@ -138,7 +138,10 @@ const RUBIX_SOLVER = {
 
         const solvedState = this.createSolvedState();
 
-        if (this.serialize(state) === this.serialize(solvedState)) {
+        if (
+            this.serialize(state) ===
+            this.serialize(solvedState)
+        ) {
             return {
                 solved: true,
                 moves: [],
@@ -150,6 +153,106 @@ const RUBIX_SOLVER = {
             solved: false,
             moves: [],
             error: "Solver algorithm not implemented yet."
+        };
+    },
+
+    /*
+     * Read the current physical cube and convert it
+     * into the validated numeric solver state.
+     *
+     * Pipeline:
+     *
+     * Physical cube
+     *      ↓
+     * 54-sticker state
+     *      ↓
+     * Sticker recognition
+     *      ↓
+     * Numeric solver state
+     *      ↓
+     * Solver validation
+     */
+    solveCurrentCube() {
+
+        if (
+            typeof RUBIX_CUBE_STATE === "undefined"
+        ) {
+            return {
+                solved: false,
+                moves: [],
+                solverState: null,
+                error: "Cube state module is unavailable."
+            };
+        }
+
+        if (
+            typeof RUBIX_SOLVER_STATE === "undefined"
+        ) {
+            return {
+                solved: false,
+                moves: [],
+                solverState: null,
+                error: "Solver state module is unavailable."
+            };
+        }
+
+        const stickerState =
+            RUBIX_CUBE_STATE.readState();
+
+        if (!stickerState) {
+            return {
+                solved: false,
+                moves: [],
+                solverState: null,
+                error: "Unable to read cube state."
+            };
+        }
+
+        const stickerValidation =
+            this.validateState(stickerState);
+
+        if (!stickerValidation.valid) {
+            return {
+                solved: false,
+                moves: [],
+                solverState: null,
+                error: stickerValidation.error
+            };
+        }
+
+        const solverState =
+            RUBIX_SOLVER_STATE.createFromStickerState(
+                stickerState
+            );
+
+        if (!solverState) {
+            return {
+                solved: false,
+                moves: [],
+                solverState: null,
+                error: "Unable to create valid solver state."
+            };
+        }
+
+        const solverValidation =
+            RUBIX_SOLVER_STATE.validate(
+                solverState
+            );
+
+        if (!solverValidation.valid) {
+            return {
+                solved: false,
+                moves: [],
+                solverState: null,
+                error: solverValidation.error
+            };
+        }
+
+        return {
+            solved: RUBIX_CUBE_STATE.isSolved(),
+            moves: [],
+            solverState: solverState,
+            error: null
         };
     }
 };
@@ -163,3 +266,4 @@ console.log("RUBIX Solver Foundation V1 loaded.");
 console.log("54-sticker state model ready.");
 console.log("State validation ready.");
 console.log("State serialization ready.");
+console.log("Current cube → solver state bridge ready.");
