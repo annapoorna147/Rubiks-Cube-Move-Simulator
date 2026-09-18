@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -677,26 +676,60 @@ function rotateLayer(face){
    MOVE
 --------------------------------------------- */
 
-function move(face,amount=1,record=true){
+function move(face, amount = 1, record = true) {
 
-    amount=((amount%4)+4)%4;
-
-    if(amount===0)return;
-
-    for(let i=0;i<amount;i++){
-        rotateLayer(face);
+    if (typeof face !== "string") {
+        return;
     }
 
-    if(record){
+    face = face.trim().toUpperCase();
 
-        let notation=face;
+    const baseFace = face.charAt(0);
 
-        if(amount===2)notation+="2";
-        if(amount===3)notation+="'";
+    if (!["U", "D", "R", "L", "F", "B"].includes(baseFace)) {
+        console.error("Invalid move:", face);
+        return;
+    }
+
+    let moveAmount;
+
+    // Standard Rubik's Cube notation
+    if (face.endsWith("'")) {
+        moveAmount = 3;
+    }
+    else if (face.endsWith("2")) {
+        moveAmount = 2;
+    }
+    else {
+        moveAmount = amount;
+    }
+
+    moveAmount = ((moveAmount % 4) + 4) % 4;
+
+    if (moveAmount === 0) {
+        return;
+    }
+
+    // Perform the actual layer rotations
+    for (let i = 0; i < moveAmount; i++) {
+        rotateLayer(baseFace);
+    }
+
+    // Record correct notation
+    if (record) {
+
+        let notation = baseFace;
+
+        if (moveAmount === 2) {
+            notation += "2";
+        }
+        else if (moveAmount === 3) {
+            notation += "'";
+        }
 
         history.push(notation);
 
-        if(!timerRunning){
+        if (!timerRunning) {
             startTimer();
         }
     }
@@ -1188,4 +1221,4 @@ updateUI();
 <script src="app/solver-state.js?v=day13-1"></script>
 <script src="tests/browser-state-test.js?v=day12-1"></script>
 </body>
-</html>
+</html> 
