@@ -426,89 +426,44 @@ function getCornerOrientation(
                 color === "yellow"
         );
 
-
     if (referenceIndex === -1) {
         return null;
     }
 
-
     const referenceFace =
         slot[referenceIndex][0];
 
-
     /*
-     * U-layer corner pieces
+     * Corner orientation convention:
+     *
+     * U/D face -> 0
+     * R/L face -> 2
+     * F/B face -> 1
+     *
+     * This convention is consistent with the
+     * cube engine's face-coordinate system.
      */
 
     if (
-        piece === "UFR" ||
-        piece === "URB" ||
-        piece === "UBL" ||
-        piece === "ULF"
+        referenceFace === "U" ||
+        referenceFace === "D"
     ) {
-
-        if (
-            referenceFace === "U" ||
-            referenceFace === "D"
-        ) {
-            return 0;
-        }
-
-
-        if (
-            referenceFace === "R" ||
-            referenceFace === "L"
-        ) {
-            return 1;
-        }
-
-
-        if (
-            referenceFace === "F" ||
-            referenceFace === "B"
-        ) {
-            return 2;
-        }
-
+        return 0;
     }
-
-
-    /*
-     * D-layer corner pieces
-     */
 
     if (
-        piece === "DFR" ||
-        piece === "DRB" ||
-        piece === "DBL" ||
-        piece === "DLF"
+        referenceFace === "R" ||
+        referenceFace === "L"
     ) {
-
-        if (
-            referenceFace === "U" ||
-            referenceFace === "D"
-        ) {
-            return 0;
-        }
-
-
-        if (
-            referenceFace === "F" ||
-            referenceFace === "B"
-        ) {
-            return 1;
-        }
-
-
-        if (
-            referenceFace === "R" ||
-            referenceFace === "L"
-        ) {
-            return 2;
-        }
-
+        return 2;
     }
 
+    if (
+        referenceFace === "F" ||
+        referenceFace === "B"
+    ) {
+        return 1;
+    }
 
     return null;
 
