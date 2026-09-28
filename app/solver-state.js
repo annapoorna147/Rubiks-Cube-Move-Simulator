@@ -416,54 +416,118 @@ RUBIX_SOLVER_STATE.cornerSlots = {
 function getCornerOrientation(
     colors,
     slot,
-    piece
+    piece,
+    position,
+    cornerSlots,
+    cornerColors
 ) {
 
-    const referenceIndex =
-        colors.findIndex(
-            color =>
-                color === "white" ||
-                color === "yellow"
+    const cornerFaceOrder = {
+
+        UFR: ["U", "F", "R"],
+        URB: ["U", "R", "B"],
+        UBL: ["U", "B", "L"],
+        ULF: ["U", "L", "F"],
+
+        DFR: ["D", "R", "F"],
+        DRB: ["D", "B", "R"],
+        DBL: ["D", "L", "B"],
+        DLF: ["D", "F", "L"]
+
+    };
+
+
+    if (
+        !cornerFaceOrder[position] ||
+        !cornerFaceOrder[piece]
+    ) {
+
+        return null;
+
+    }
+
+
+    const currentByFace = {};
+
+    slot.forEach(
+        ([face, index], i) => {
+
+            currentByFace[face] =
+                colors[i];
+
+        }
+    );
+
+
+    const canonicalSlot =
+        cornerSlots[piece];
+
+    const canonicalColors =
+        cornerColors[piece];
+
+
+    if (
+        !canonicalSlot ||
+        !canonicalColors
+    ) {
+
+        return null;
+
+    }
+
+
+    const canonicalByFace = {};
+
+    canonicalSlot.forEach(
+        ([face, index], i) => {
+
+            canonicalByFace[face] =
+                canonicalColors[i];
+
+        }
+    );
+
+
+    const currentSequence =
+        cornerFaceOrder[position].map(
+            face => currentByFace[face]
         );
 
-    if (referenceIndex === -1) {
-        return null;
-    }
 
-    const referenceFace =
-        slot[referenceIndex][0];
+    const canonicalSequence =
+        cornerFaceOrder[piece].map(
+            face => canonicalByFace[face]
+        );
 
-    /*
-     * Corner orientation convention:
-     *
-     * U/D face -> 0
-     * R/L face -> 2
-     * F/B face -> 1
-     *
-     * This convention is consistent with the
-     * cube engine's face-coordinate system.
-     */
 
-    if (
-        referenceFace === "U" ||
-        referenceFace === "D"
+    for (
+        let orientation = 0;
+        orientation < 3;
+        orientation++
     ) {
-        return 0;
+
+        const rotated =
+            canonicalSequence
+                .slice(orientation)
+                .concat(
+                    canonicalSequence.slice(
+                        0,
+                        orientation
+                    )
+                );
+
+
+        if (
+            JSON.stringify(rotated) ===
+            JSON.stringify(currentSequence)
+        ) {
+
+            return orientation;
+
+        }
+
     }
 
-    if (
-        referenceFace === "R" ||
-        referenceFace === "L"
-    ) {
-        return 2;
-    }
-
-    if (
-        referenceFace === "F" ||
-        referenceFace === "B"
-    ) {
-        return 1;
-    }
 
     return null;
 
@@ -589,7 +653,10 @@ function(state) {
             getCornerOrientation(
                 colors,
                 slot,
-                piecePosition
+                piecePosition,
+                position,
+                this.cornerSlots,
+                this.cornerColors
             );
 
 
