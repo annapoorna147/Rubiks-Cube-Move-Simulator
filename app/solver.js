@@ -477,12 +477,48 @@ const RUBIX_SOLVER = (() => {
     }
 
     // ============================================================
+    // GENERATE NEIGHBOR STATES
+    //
+    // Creates every legal basic-turn successor from the current
+    // state. The solver search will use these states later.
+    // ============================================================
+
+    function generateNeighbors(state) {
+        const neighbors = [];
+        const moveNotations = [];
+
+        for (const face of faces) {
+            moveNotations.push(face);
+            moveNotations.push(face + "'");
+            moveNotations.push(face + "2");
+        }
+
+        for (const move of moveNotations) {
+            const nextState = applyMove(state, move);
+
+            neighbors.push({
+                move,
+                state: nextState,
+                fingerprint: fingerprint(nextState)
+            });
+        }
+
+        return neighbors;
+    }
+
+    // ============================================================
     // CHECK SOLVED
     // ============================================================
 
+    function fingerprint(state) {
+        return state.corners.map(c => c.piece + ":" + c.orientation).join(",") +
+            "|" +
+            state.edges.map(e => e.piece + ":" + e.orientation).join(",");
+    }
+
     function isSolved(state) {
-        return serialize(state) ===
-            serialize(createSolvedState());
+        return fingerprint(state) ===
+            fingerprint(createSolvedState());
     }
 
     // ============================================================
@@ -491,13 +527,15 @@ const RUBIX_SOLVER = (() => {
     // Actual search algorithm will be added next.
     // ============================================================
 
-    function solve(state) {
+    function solve(state, maxDepth = 7) {
         const validation = validateState(state);
 
         if (!validation.valid) {
             return {
                 solved: false,
                 moves: [],
+                depth: null,
+                searchedStates: 0,
                 error: validation.error
             };
         }
@@ -506,14 +544,124 @@ const RUBIX_SOLVER = (() => {
             return {
                 solved: true,
                 moves: [],
+                depth: 0,
+                searchedStates: 1,
                 error: null
             };
+        }
+
+        if (
+            !Number.isInteger(maxDepth) ||
+            maxDepth < 1 ||
+            maxDepth > 10
+        ) {
+            return {
+                solved: false,
+                moves: [],
+                depth: null,
+                searchedStates: 0,
+                error: "maxDepth must be an integer between 1 and 10."
+            };
+        }
+
+        const legalMoves = new Set([
+            "U", "U'", "U2",
+            "R", "R'", "R2",
+            "F", "F'", "F2",
+            "D", "D'", "D2",
+            "L", "L'", "L2",
+            "B", "B'", "B2"
+        ]);
+
+        const startFingerprint = fingerprint(state);
+
+        const queue = [{
+            state,
+            moves: [],
+            lastFace: null
+        }];
+
+        const visited = new Set([startFingerprint]);
+
+        let head = 0;
+
+        while (head < queue.length) {
+            const current = queue[head++];
+
+            if (current.moves.length >= maxDepth) {
+                continue;
+            }
+
+            const neighbors = generateNeighbors(current.state);
+
+            for (const neighbor of neighbors) {
+                const face = neighbor.move[0];
+
+                if (face === current.lastFace) {
+                    continue;
+                }
+
+                if (!legalMoves.has(neighbor.move)) {
+                    continue;
+                }
+
+                if (visited.has(neighbor.fingerprint)) {
+                    continue;
+                }
+
+                const nextMoves = current.moves.concat(neighbor.move);
+
+                if (isSolved(neighbor.state)) {
+                    const verificationState =
+                        applyMoves(state, nextMoves);
+
+                    if (!isSolved(verificationState)) {
+                        return {
+                            solved: false,
+                            moves: [],
+                            depth: null,
+                            searchedStates: visited.size,
+                            error: "Internal error: returned solution failed verification."
+                        };
+                    }
+
+                    if (nextMoves.length !== nextMoves.filter(
+                        move => legalMoves.has(move)
+                    ).length) {
+                        return {
+                            solved: false,
+                            moves: [],
+                            depth: null,
+                            searchedStates: visited.size,
+                            error: "Internal error: illegal move in solution."
+                        };
+                    }
+
+                    return {
+                        solved: true,
+                        moves: nextMoves,
+                        depth: nextMoves.length,
+                        searchedStates: visited.size + 1,
+                        error: null
+                    };
+                }
+
+                visited.add(neighbor.fingerprint);
+
+                queue.push({
+                    state: neighbor.state,
+                    moves: nextMoves,
+                    lastFace: face
+                });
+            }
         }
 
         return {
             solved: false,
             moves: [],
-            error: "Solver search algorithm not implemented yet."
+            depth: null,
+            searchedStates: visited.size,
+            error: "No solution found within the maximum search depth."
         };
     }
 
@@ -580,6 +728,8 @@ const RUBIX_SOLVER = (() => {
         createSolvedState,
         validateState,
         serialize,
+        fingerprint,
+        generateNeighbors,
 
         MOVE_TABLE,
 
