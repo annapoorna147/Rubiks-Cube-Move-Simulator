@@ -242,3 +242,79 @@ if (passed !== total) {
 
 console.log("🎉 Day 5 bidirectional solver is regression-tested.");
 
+console.log("");
+console.log("================================");
+console.log("   DAY 6 SCALABILITY TESTS");
+console.log("================================");
+
+const day6Tests = [
+    { name: "R", scramble: ["R"], depth: 1 },
+    { name: "R U", scramble: ["R", "U"], depth: 2 },
+    { name: "R U F", scramble: ["R", "U", "F"], depth: 3 },
+    {
+        name: "R U F L",
+        scramble: ["R", "U", "F", "L"],
+        depth: 4
+    },
+    {
+        name: "R U F L D",
+        scramble: ["R", "U", "F", "L", "D"],
+        depth: 5
+    },
+    {
+        name: "R U F L D B",
+        scramble: ["R", "U", "F", "L", "D", "B"],
+        depth: 6
+    }
+];
+
+for (const testCase of day6Tests) {
+    const startState = solver.applyMoves(
+        solver.createSolvedState(),
+        testCase.scramble
+    );
+
+    const result = solver.solve(
+        startState,
+        testCase.depth
+    );
+
+    test(
+        `Day 6 ${testCase.name} — solver succeeds`,
+        result.solved === true
+    );
+
+    test(
+        `Day 6 ${testCase.name} — expected shortest depth`,
+        result.solved === true &&
+        result.depth === testCase.depth
+    );
+
+    test(
+        `Day 6 ${testCase.name} — solution is legal`,
+        result.solved === true &&
+        result.moves.every(move => legalMoves.has(move))
+    );
+
+    const verificationState = solver.applyMoves(
+        startState,
+        result.moves
+    );
+
+    test(
+        `Day 6 ${testCase.name} — solution verifies`,
+        solver.isSolved(verificationState) === true
+    );
+}
+
+console.log("--------------------------------");
+console.log(`DAY 6 TESTS: ${passed}/${total} TOTAL TESTS PASSED`);
+console.log("--------------------------------");
+
+if (passed !== total) {
+    process.exit(1);
+}
+
+console.log("🎉 Day 6 scalability tests passed.");
+
+
