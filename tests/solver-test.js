@@ -146,4 +146,99 @@ if (passed !== total) {
     process.exit(1);
 }
 
-console.log("🎉 Solver foundation is ready.");
+
+console.log("");
+console.log("================================");
+console.log("   DAY 5 BIDIRECTIONAL TESTS");
+console.log("================================");
+
+function testBidirectionalScramble(name, scramble, maxDepth, expectedDepth) {
+    const start = solver.applyMoves(
+        solver.createSolvedState(),
+        scramble
+    );
+
+    const result = solver.solve(start, maxDepth);
+
+    test(
+        `${name} — solver succeeds`,
+        result.solved === true
+    );
+
+    test(
+        `${name} — expected depth`,
+        result.solved === true &&
+        result.depth === expectedDepth
+    );
+
+    test(
+        `${name} — solution moves are legal`,
+        result.solved === true &&
+        result.moves.every(move => legalMoves.has(move))
+    );
+
+    const verification = solver.applyMoves(
+        start,
+        result.moves
+    );
+
+    test(
+        `${name} — solution verifies`,
+        solver.isSolved(verification) === true
+    );
+}
+
+testBidirectionalScramble(
+    "Day 5 R",
+    ["R"],
+    3,
+    1
+);
+
+testBidirectionalScramble(
+    "Day 5 R U",
+    ["R", "U"],
+    4,
+    2
+);
+
+testBidirectionalScramble(
+    "Day 5 R U F",
+    ["R", "U", "F"],
+    5,
+    3
+);
+
+testBidirectionalScramble(
+    "Day 5 R U F L",
+    ["R", "U", "F", "L"],
+    6,
+    4
+);
+
+const depthLimitedState = solver.applyMoves(
+    solver.createSolvedState(),
+    ["R", "U", "F", "L"]
+);
+
+const depthLimitedResult = solver.solve(
+    depthLimitedState,
+    3
+);
+
+test(
+    "Day 5 maxDepth prevents deeper solution",
+    depthLimitedResult.solved === false &&
+    depthLimitedResult.depth === null
+);
+
+console.log("--------------------------------");
+console.log(`ALL SOLVER TESTS: ${passed}/${total} TESTS PASSED`);
+console.log("--------------------------------");
+
+if (passed !== total) {
+    process.exit(1);
+}
+
+console.log("🎉 Day 5 bidirectional solver is regression-tested.");
+

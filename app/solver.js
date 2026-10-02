@@ -564,104 +564,194 @@ const RUBIX_SOLVER = (() => {
             };
         }
 
-        const legalMoves = new Set([
+        const legalMoves = [
             "U", "U'", "U2",
             "R", "R'", "R2",
             "F", "F'", "F2",
             "D", "D'", "D2",
             "L", "L'", "L2",
             "B", "B'", "B2"
-        ]);
+        ];
 
-        const startFingerprint = fingerprint(state);
+        const legalMoveSet = new Set(legalMoves);
 
-        const queue = [{
-            state,
-            moves: [],
-            lastFace: null
-        }];
+        function inverseMove(move) {
+            if (move.endsWith("2")) {
+                return move;
+            }
 
-        const visited = new Set([startFingerprint]);
+            if (move.endsWith("'")) {
+                return move[0];
+            }
 
-        let head = 0;
+            return move + "'";
+        }
 
-        while (head < queue.length) {
-            const current = queue[head++];
+        function inverseMoves(moves) {
+            return moves
+                .slice()
+                .reverse()
+                .map(inverseMove);
+        }
 
-            if (current.moves.length >= maxDepth) {
+        function buildFrontier(startState, depthLimit) {
+            const rootFingerprint = fingerprint(startState);
+
+            const entries = new Map();
+
+            entries.set(rootFingerprint, {
+                state: startState,
+                moves: [],
+                lastFace: null
+            });
+
+            let frontier = [{
+                state: startState,
+                moves: [],
+                lastFace: null
+            }];
+
+            for (let depth = 0; depth < depthLimit; depth++) {
+                const nextFrontier = [];
+
+                for (const current of frontier) {
+                    const neighbors = generateNeighbors(current.state);
+
+                    for (const neighbor of neighbors) {
+                        const face = neighbor.move[0];
+
+                        if (face === current.lastFace) {
+                            continue;
+                        }
+
+                        if (!legalMoveSet.has(neighbor.move)) {
+                            continue;
+                        }
+
+                        if (entries.has(neighbor.fingerprint)) {
+                            continue;
+                        }
+
+                        const nextMoves =
+                            current.moves.concat(neighbor.move);
+
+                        const entry = {
+                            state: neighbor.state,
+                            moves: nextMoves,
+                            lastFace: face
+                        };
+
+                        entries.set(neighbor.fingerprint, entry);
+                        nextFrontier.push(entry);
+                    }
+                }
+
+                frontier = nextFrontier;
+
+                if (frontier.length === 0) {
+                    break;
+                }
+            }
+
+            return entries;
+        }
+
+        const forwardDepth = Math.floor(maxDepth / 2);
+        const backwardDepth = maxDepth - forwardDepth;
+
+        const forward = buildFrontier(state, forwardDepth);
+
+        const solvedState = createSolvedState();
+
+        const backward = buildFrontier(
+            solvedState,
+            backwardDepth
+        );
+
+        let bestMoves = null;
+
+        for (const [meetingFingerprint, forwardEntry] of forward) {
+            const backwardEntry = backward.get(meetingFingerprint);
+
+            if (!backwardEntry) {
                 continue;
             }
 
-            const neighbors = generateNeighbors(current.state);
+            const candidateMoves =
+                forwardEntry.moves.concat(
+                    inverseMoves(backwardEntry.moves)
+                );
 
-            for (const neighbor of neighbors) {
-                const face = neighbor.move[0];
+            if (candidateMoves.length > maxDepth) {
+                continue;
+            }
 
-                if (face === current.lastFace) {
-                    continue;
-                }
-
-                if (!legalMoves.has(neighbor.move)) {
-                    continue;
-                }
-
-                if (visited.has(neighbor.fingerprint)) {
-                    continue;
-                }
-
-                const nextMoves = current.moves.concat(neighbor.move);
-
-                if (isSolved(neighbor.state)) {
-                    const verificationState =
-                        applyMoves(state, nextMoves);
-
-                    if (!isSolved(verificationState)) {
-                        return {
-                            solved: false,
-                            moves: [],
-                            depth: null,
-                            searchedStates: visited.size,
-                            error: "Internal error: returned solution failed verification."
-                        };
-                    }
-
-                    if (nextMoves.length !== nextMoves.filter(
-                        move => legalMoves.has(move)
-                    ).length) {
-                        return {
-                            solved: false,
-                            moves: [],
-                            depth: null,
-                            searchedStates: visited.size,
-                            error: "Internal error: illegal move in solution."
-                        };
-                    }
-
-                    return {
-                        solved: true,
-                        moves: nextMoves,
-                        depth: nextMoves.length,
-                        searchedStates: visited.size + 1,
-                        error: null
-                    };
-                }
-
-                visited.add(neighbor.fingerprint);
-
-                queue.push({
-                    state: neighbor.state,
-                    moves: nextMoves,
-                    lastFace: face
-                });
+            if (
+                bestMoves === null ||
+                candidateMoves.length < bestMoves.length
+            ) {
+                bestMoves = candidateMoves;
             }
         }
 
+        const searchedStates =
+            forward.size + backward.size;
+
+        if (bestMoves === null) {
+            return {
+                solved: false,
+                moves: [],
+                depth: null,
+                searchedStates,
+                error: "No solution found within the maximum search depth."
+            };
+        }
+
+        if (
+            bestMoves.length === 0 ||
+            bestMoves.length > maxDepth
+        ) {
+            return {
+                solved: false,
+                moves: [],
+                depth: null,
+                searchedStates,
+                error: "Internal error: invalid solution depth."
+            };
+        }
+
+        if (
+            !bestMoves.every(move => legalMoveSet.has(move))
+        ) {
+            return {
+                solved: false,
+                moves: [],
+                depth: null,
+                searchedStates,
+                error: "Internal error: illegal move in solution."
+            };
+        }
+
+        const verificationState =
+            applyMoves(state, bestMoves);
+
+        if (!isSolved(verificationState)) {
+            return {
+                solved: false,
+                moves: [],
+                depth: null,
+                searchedStates,
+                error:
+                    "Internal error: returned solution failed verification."
+            };
+        }
+
         return {
-            solved: false,
-            moves: [],
-            depth: null,
-            searchedStates: visited.size,
-            error: "No solution found within the maximum search depth."
+            solved: true,
+            moves: bestMoves,
+            depth: bestMoves.length,
+            searchedStates,
+            error: null
         };
     }
 
