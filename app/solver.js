@@ -599,49 +599,52 @@ const RUBIX_SOLVER = (() => {
 
             const entries = new Map();
 
-            entries.set(rootFingerprint, {
+            const rootEntry = {
                 state: startState,
                 moves: [],
                 lastFace: null
-            });
+            };
 
-            let frontier = [{
-                state: startState,
-                moves: [],
-                lastFace: null
-            }];
+            entries.set(rootFingerprint, rootEntry);
+
+            let frontier = [rootEntry];
 
             for (let depth = 0; depth < depthLimit; depth++) {
                 const nextFrontier = [];
 
                 for (const current of frontier) {
-                    const neighbors = generateNeighbors(current.state);
-
-                    for (const neighbor of neighbors) {
-                        const face = neighbor.move[0];
+                    for (const move of legalMoves) {
+                        const face = move[0];
 
                         if (face === current.lastFace) {
                             continue;
                         }
 
-                        if (!legalMoveSet.has(neighbor.move)) {
-                            continue;
-                        }
+                        const nextState = applyMove(
+                            current.state,
+                            move
+                        );
 
-                        if (entries.has(neighbor.fingerprint)) {
+                        const nextFingerprint = fingerprint(nextState);
+
+                        if (entries.has(nextFingerprint)) {
                             continue;
                         }
 
                         const nextMoves =
-                            current.moves.concat(neighbor.move);
+                            current.moves.concat(move);
 
                         const entry = {
-                            state: neighbor.state,
+                            state: nextState,
                             moves: nextMoves,
                             lastFace: face
                         };
 
-                        entries.set(neighbor.fingerprint, entry);
+                        entries.set(
+                            nextFingerprint,
+                            entry
+                        );
+
                         nextFrontier.push(entry);
                     }
                 }
