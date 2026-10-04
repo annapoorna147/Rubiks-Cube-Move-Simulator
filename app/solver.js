@@ -659,102 +659,80 @@ const RUBIX_SOLVER = (() => {
             return entries;
         }
 
-        const forwardDepth = Math.floor(maxDepth / 2);
-        const backwardDepth = maxDepth - forwardDepth;
+        let searchedStates = 1;
 
-        const forward = buildFrontier(state, forwardDepth);
+        /*
+         * Search progressively by solution depth.
+         *
+         * For each possible depth, split the search around the middle.
+         * This allows easy scrambles to finish without constructing
+         * unnecessarily deep frontiers.
+         */
+        for (let targetDepth = 1; targetDepth <= maxDepth; targetDepth++) {
+            const forwardDepth = Math.floor(targetDepth / 2);
+            const backwardDepth = targetDepth - forwardDepth;
 
-        const solvedState = createSolvedState();
+            const forward = buildFrontier(
+                state,
+                forwardDepth
+            );
 
-        const backward = buildFrontier(
-            solvedState,
-            backwardDepth
-        );
+            const backward = buildFrontier(
+                createSolvedState(),
+                backwardDepth
+            );
 
-        let bestMoves = null;
+            searchedStates +=
+                forward.size + backward.size;
 
-        for (const [meetingFingerprint, forwardEntry] of forward) {
-            const backwardEntry = backward.get(meetingFingerprint);
+            for (const [meetingFingerprint, forwardEntry] of forward) {
+                const backwardEntry =
+                    backward.get(meetingFingerprint);
 
-            if (!backwardEntry) {
-                continue;
+                if (!backwardEntry) {
+                    continue;
+                }
+
+                const candidateMoves =
+                    forwardEntry.moves.concat(
+                        inverseMoves(backwardEntry.moves)
+                    );
+
+                if (candidateMoves.length !== targetDepth) {
+                    continue;
+                }
+
+                if (
+                    !candidateMoves.every(
+                        move => legalMoveSet.has(move)
+                    )
+                ) {
+                    continue;
+                }
+
+                const verificationState =
+                    applyMoves(state, candidateMoves);
+
+                if (!isSolved(verificationState)) {
+                    continue;
+                }
+
+                return {
+                    solved: true,
+                    moves: candidateMoves,
+                    depth: candidateMoves.length,
+                    searchedStates,
+                    error: null
+                };
             }
-
-            const candidateMoves =
-                forwardEntry.moves.concat(
-                    inverseMoves(backwardEntry.moves)
-                );
-
-            if (candidateMoves.length > maxDepth) {
-                continue;
-            }
-
-            if (
-                bestMoves === null ||
-                candidateMoves.length < bestMoves.length
-            ) {
-                bestMoves = candidateMoves;
-            }
-        }
-
-        const searchedStates =
-            forward.size + backward.size;
-
-        if (bestMoves === null) {
-            return {
-                solved: false,
-                moves: [],
-                depth: null,
-                searchedStates,
-                error: "No solution found within the maximum search depth."
-            };
-        }
-
-        if (
-            bestMoves.length === 0 ||
-            bestMoves.length > maxDepth
-        ) {
-            return {
-                solved: false,
-                moves: [],
-                depth: null,
-                searchedStates,
-                error: "Internal error: invalid solution depth."
-            };
-        }
-
-        if (
-            !bestMoves.every(move => legalMoveSet.has(move))
-        ) {
-            return {
-                solved: false,
-                moves: [],
-                depth: null,
-                searchedStates,
-                error: "Internal error: illegal move in solution."
-            };
-        }
-
-        const verificationState =
-            applyMoves(state, bestMoves);
-
-        if (!isSolved(verificationState)) {
-            return {
-                solved: false,
-                moves: [],
-                depth: null,
-                searchedStates,
-                error:
-                    "Internal error: returned solution failed verification."
-            };
         }
 
         return {
-            solved: true,
-            moves: bestMoves,
-            depth: bestMoves.length,
+            solved: false,
+            moves: [],
+            depth: null,
             searchedStates,
-            error: null
+            error: "No solution found within the maximum search depth."
         };
     }
 
@@ -762,7 +740,7 @@ const RUBIX_SOLVER = (() => {
     // SOLVE CURRENT CUBE
     // ============================================================
 
-    function solveCurrentCube() {
+    function solveCurrentCube(maxDepth = 7) {
 
         if (
             typeof RUBIX_CUBE_STATE === "undefined" ||
@@ -781,6 +759,15 @@ const RUBIX_SOLVER = (() => {
         const solverState =
             RUBIX_SOLVER_STATE.createFromStickerState(stickerState);
 
+        if (!solverState) {
+            return {
+                solved: false,
+                moves: [],
+                solverState: null,
+                error: "Could not create solver state from cube."
+            };
+        }
+
         const validation = validateState(solverState);
 
         if (!validation.valid) {
@@ -797,15 +784,20 @@ const RUBIX_SOLVER = (() => {
                 solved: true,
                 moves: [],
                 solverState,
+                depth: 0,
+                searchedStates: 1,
                 error: null
             };
         }
 
-        return {
-            solved: false,
-            moves: [],
+        const result = solve(
             solverState,
-            error: "Solver search algorithm not implemented yet."
+            maxDepth
+        );
+
+        return {
+            ...result,
+            solverState
         };
     }
 
