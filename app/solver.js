@@ -573,8 +573,6 @@ const RUBIX_SOLVER = (() => {
             "B", "B'", "B2"
         ];
 
-        const legalMoveSet = new Set(legalMoves);
-
         function inverseMove(move) {
             if (move.endsWith("2")) {
                 return move;
@@ -594,25 +592,52 @@ const RUBIX_SOLVER = (() => {
                 .map(inverseMove);
         }
 
-        function buildFrontier(startState, depthLimit) {
-            const rootFingerprint = fingerprint(startState);
+        function reconstructMoves(entry) {
+            const moves = [];
+            let current = entry;
 
+            while (current.parent) {
+                moves.push(current.move);
+                current = current.parent;
+            }
+
+            return moves.reverse();
+        }
+
+        function createLayeredFrontier(
+            startState,
+            maxLayerDepth
+        ) {
             const entries = new Map();
+            const layers = [];
 
-            const rootEntry = {
+            const root = {
                 state: startState,
-                moves: [],
+                parent: null,
+                move: null,
                 lastFace: null
             };
 
-            entries.set(rootFingerprint, rootEntry);
+            entries.set(
+                fingerprint(startState),
+                root
+            );
 
-            let frontier = [rootEntry];
+            layers.push([root]);
 
-            for (let depth = 0; depth < depthLimit; depth++) {
-                const nextFrontier = [];
+            let searchedStates = 1;
 
-                for (const current of frontier) {
+            for (
+                let depth = 1;
+                depth <= maxLayerDepth;
+                depth++
+            ) {
+                const previousLayer =
+                    layers[depth - 1];
+
+                const currentLayer = [];
+
+                for (const current of previousLayer) {
                     for (const move of legalMoves) {
                         const face = move[0];
 
@@ -620,23 +645,27 @@ const RUBIX_SOLVER = (() => {
                             continue;
                         }
 
-                        const nextState = applyMove(
-                            current.state,
-                            move
-                        );
+                        const nextState =
+                            applyMove(
+                                current.state,
+                                move
+                            );
 
-                        const nextFingerprint = fingerprint(nextState);
+                        const nextFingerprint =
+                            fingerprint(nextState);
 
-                        if (entries.has(nextFingerprint)) {
+                        if (
+                            entries.has(
+                                nextFingerprint
+                            )
+                        ) {
                             continue;
                         }
 
-                        const nextMoves =
-                            current.moves.concat(move);
-
                         const entry = {
                             state: nextState,
-                            moves: nextMoves,
+                            parent: current,
+                            move,
                             lastFace: face
                         };
 
@@ -645,75 +674,154 @@ const RUBIX_SOLVER = (() => {
                             entry
                         );
 
-                        nextFrontier.push(entry);
+                        currentLayer.push(entry);
+                        searchedStates += 1;
                     }
                 }
 
-                frontier = nextFrontier;
-
-                if (frontier.length === 0) {
-                    break;
-                }
+                layers.push(currentLayer);
             }
 
-            return entries;
+            return {
+                entries,
+                layers,
+                searchedStates
+            };
         }
 
-        let searchedStates = 1;
+        const forwardDepth =
+            Math.floor(maxDepth / 2);
 
-        /*
-         * Search progressively by solution depth.
-         *
-         * For each possible depth, split the search around the middle.
-         * This allows easy scrambles to finish without constructing
-         * unnecessarily deep frontiers.
-         */
-        for (let targetDepth = 1; targetDepth <= maxDepth; targetDepth++) {
-            const forwardDepth = Math.floor(targetDepth / 2);
-            const backwardDepth = targetDepth - forwardDepth;
+        const backwardDepth =
+            Math.ceil(maxDepth / 2);
 
-            const forward = buildFrontier(
+        const forward =
+            createLayeredFrontier(
                 state,
                 forwardDepth
             );
 
-            const backward = buildFrontier(
+        const backward =
+            createLayeredFrontier(
                 createSolvedState(),
                 backwardDepth
             );
 
-            searchedStates +=
-                forward.size + backward.size;
+        let searchedStates =
+            forward.searchedStates +
+            backward.searchedStates -
+            1;
 
-            for (const [meetingFingerprint, forwardEntry] of forward) {
-                const backwardEntry =
-                    backward.get(meetingFingerprint);
+        for (
+            let targetDepth = 1;
+            targetDepth <= maxDepth;
+            targetDepth++
+        ) {
+            const forwardLayerDepth =
+                Math.floor(targetDepth / 2);
 
-                if (!backwardEntry) {
-                    continue;
-                }
+            const backwardLayerDepth =
+                targetDepth -
+                forwardLayerDepth;
 
-                const candidateMoves =
-                    forwardEntry.moves.concat(
-                        inverseMoves(backwardEntry.moves)
+            const forwardLayer =
+                forward.layers[
+                    forwardLayerDepth
+                ];
+
+            const backwardLayer =
+                backward.layers[
+                    backwardLayerDepth
+                ];
+
+            if (
+                !forwardLayer ||
+                !backwardLayer
+            ) {
+                continue;
+            }
+
+            const smallerIsForward =
+                forwardLayer.length <=
+                backwardLayer.length;
+
+            const smallerLayer =
+                smallerIsForward
+                    ? forwardLayer
+                    : backwardLayer;
+
+            const lookupLayer =
+                smallerIsForward
+                    ? backwardLayer
+                    : forwardLayer;
+
+            const lookup = new Map();
+
+            for (const entry of lookupLayer) {
+                lookup.set(
+                    fingerprint(entry.state),
+                    entry
+                );
+            }
+
+            for (const entry of smallerLayer) {
+                const meetingFingerprint =
+                    fingerprint(entry.state);
+
+                const otherEntry =
+                    lookup.get(
+                        meetingFingerprint
                     );
 
-                if (candidateMoves.length !== targetDepth) {
+                if (!otherEntry) {
                     continue;
                 }
 
+                const forwardEntry =
+                    smallerIsForward
+                        ? entry
+                        : otherEntry;
+
+                const backwardEntry =
+                    smallerIsForward
+                        ? otherEntry
+                        : entry;
+
+                const forwardMoves =
+                    reconstructMoves(
+                        forwardEntry
+                    );
+
+                const backwardMoves =
+                    reconstructMoves(
+                        backwardEntry
+                    );
+
+                const candidateMoves =
+                    forwardMoves.concat(
+                        inverseMoves(
+                            backwardMoves
+                        )
+                    );
+
                 if (
-                    !candidateMoves.every(
-                        move => legalMoveSet.has(move)
-                    )
+                    candidateMoves.length !==
+                    targetDepth
                 ) {
                     continue;
                 }
 
                 const verificationState =
-                    applyMoves(state, candidateMoves);
+                    applyMoves(
+                        state,
+                        candidateMoves
+                    );
 
-                if (!isSolved(verificationState)) {
+                if (
+                    !isSolved(
+                        verificationState
+                    )
+                ) {
                     continue;
                 }
 
@@ -732,13 +840,10 @@ const RUBIX_SOLVER = (() => {
             moves: [],
             depth: null,
             searchedStates,
-            error: "No solution found within the maximum search depth."
+            error:
+                "No solution found within the maximum search depth."
         };
     }
-
-    // ============================================================
-    // SOLVE CURRENT CUBE
-    // ============================================================
 
     function solveCurrentCube(maxDepth = 7) {
 
