@@ -560,7 +560,8 @@ const RUBIX_SOLVER = (() => {
                 moves: [],
                 depth: null,
                 searchedStates: 0,
-                error: "maxDepth must be an integer between 1 and 10."
+                error:
+                    "maxDepth must be an integer between 1 and 10."
             };
         }
 
@@ -572,6 +573,9 @@ const RUBIX_SOLVER = (() => {
             "L", "L'", "L2",
             "B", "B'", "B2"
         ];
+
+        const legalMoveSet =
+            new Set(legalMoves);
 
         function inverseMove(move) {
             if (move.endsWith("2")) {
@@ -604,13 +608,9 @@ const RUBIX_SOLVER = (() => {
             return moves.reverse();
         }
 
-        function createLayeredFrontier(
-            startState,
-            maxLayerDepth
+        function createProgressiveFrontier(
+            startState
         ) {
-            const entries = new Map();
-            const layers = [];
-
             const root = {
                 state: startState,
                 parent: null,
@@ -618,22 +618,29 @@ const RUBIX_SOLVER = (() => {
                 lastFace: null
             };
 
-            entries.set(
-                fingerprint(startState),
-                root
-            );
+            return {
+                entries: new Map([
+                    [
+                        fingerprint(startState),
+                        root
+                    ]
+                ]),
+                layers: [[root]]
+            };
+        }
 
-            layers.push([root]);
-
-            let searchedStates = 1;
-
-            for (
-                let depth = 1;
-                depth <= maxLayerDepth;
-                depth++
+        function extendFrontier(
+            frontier,
+            targetDepth
+        ) {
+            while (
+                frontier.layers.length <=
+                targetDepth
             ) {
                 const previousLayer =
-                    layers[depth - 1];
+                    frontier.layers[
+                        frontier.layers.length - 1
+                    ];
 
                 const currentLayer = [];
 
@@ -641,7 +648,10 @@ const RUBIX_SOLVER = (() => {
                     for (const move of legalMoves) {
                         const face = move[0];
 
-                        if (face === current.lastFace) {
+                        if (
+                            face ===
+                            current.lastFace
+                        ) {
                             continue;
                         }
 
@@ -652,10 +662,12 @@ const RUBIX_SOLVER = (() => {
                             );
 
                         const nextFingerprint =
-                            fingerprint(nextState);
+                            fingerprint(
+                                nextState
+                            );
 
                         if (
-                            entries.has(
+                            frontier.entries.has(
                                 nextFingerprint
                             )
                         ) {
@@ -669,123 +681,96 @@ const RUBIX_SOLVER = (() => {
                             lastFace: face
                         };
 
-                        entries.set(
+                        frontier.entries.set(
                             nextFingerprint,
                             entry
                         );
 
                         currentLayer.push(entry);
-                        searchedStates += 1;
                     }
                 }
 
-                layers.push(currentLayer);
+                frontier.layers.push(
+                    currentLayer
+                );
             }
-
-            return {
-                entries,
-                layers,
-                searchedStates
-            };
         }
 
-        const forwardDepth =
-            Math.floor(maxDepth / 2);
-
-        const backwardDepth =
-            Math.ceil(maxDepth / 2);
-
         const forward =
-            createLayeredFrontier(
-                state,
-                forwardDepth
+            createProgressiveFrontier(
+                state
             );
 
         const backward =
-            createLayeredFrontier(
-                createSolvedState(),
-                backwardDepth
+            createProgressiveFrontier(
+                createSolvedState()
             );
 
-        let searchedStates =
-            forward.searchedStates +
-            backward.searchedStates -
-            1;
+        let searchedStates = 1;
 
         for (
             let targetDepth = 1;
             targetDepth <= maxDepth;
             targetDepth++
         ) {
-            const forwardLayerDepth =
-                Math.floor(targetDepth / 2);
+            const forwardDepth =
+                Math.floor(
+                    targetDepth / 2
+                );
 
-            const backwardLayerDepth =
+            const backwardDepth =
                 targetDepth -
-                forwardLayerDepth;
+                forwardDepth;
+
+            extendFrontier(
+                forward,
+                forwardDepth
+            );
+
+            extendFrontier(
+                backward,
+                backwardDepth
+            );
+
+            searchedStates =
+                forward.entries.size +
+                backward.entries.size -
+                1;
 
             const forwardLayer =
                 forward.layers[
-                    forwardLayerDepth
+                    forwardDepth
                 ];
 
             const backwardLayer =
                 backward.layers[
-                    backwardLayerDepth
+                    backwardDepth
                 ];
 
-            if (
-                !forwardLayer ||
-                !backwardLayer
-            ) {
-                continue;
-            }
+            const backwardLookup =
+                new Map();
 
-            const smallerIsForward =
-                forwardLayer.length <=
-                backwardLayer.length;
-
-            const smallerLayer =
-                smallerIsForward
-                    ? forwardLayer
-                    : backwardLayer;
-
-            const lookupLayer =
-                smallerIsForward
-                    ? backwardLayer
-                    : forwardLayer;
-
-            const lookup = new Map();
-
-            for (const entry of lookupLayer) {
-                lookup.set(
+            for (const entry of backwardLayer) {
+                backwardLookup.set(
                     fingerprint(entry.state),
                     entry
                 );
             }
 
-            for (const entry of smallerLayer) {
+            for (const forwardEntry of forwardLayer) {
                 const meetingFingerprint =
-                    fingerprint(entry.state);
+                    fingerprint(
+                        forwardEntry.state
+                    );
 
-                const otherEntry =
-                    lookup.get(
+                const backwardEntry =
+                    backwardLookup.get(
                         meetingFingerprint
                     );
 
-                if (!otherEntry) {
+                if (!backwardEntry) {
                     continue;
                 }
-
-                const forwardEntry =
-                    smallerIsForward
-                        ? entry
-                        : otherEntry;
-
-                const backwardEntry =
-                    smallerIsForward
-                        ? otherEntry
-                        : entry;
 
                 const forwardMoves =
                     reconstructMoves(
@@ -807,6 +792,15 @@ const RUBIX_SOLVER = (() => {
                 if (
                     candidateMoves.length !==
                     targetDepth
+                ) {
+                    continue;
+                }
+
+                if (
+                    !candidateMoves.every(
+                        move =>
+                            legalMoveSet.has(move)
+                    )
                 ) {
                     continue;
                 }
