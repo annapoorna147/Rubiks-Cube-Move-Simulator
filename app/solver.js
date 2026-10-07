@@ -399,27 +399,25 @@ const RUBIX_SOLVER = (() => {
             throw new Error(`Invalid solver move: ${face}`);
         }
 
-        const next = cloneSolverState(state);
+        return {
+            corners: table.corners.map(
+                ([source, twist], position) => ({
+                    position: state.corners[position].position,
+                    piece: state.corners[source].piece,
+                    orientation:
+                        (state.corners[source].orientation + twist) % 3
+                })
+            ),
 
-        next.corners = table.corners.map(
-            ([source, twist], position) => ({
-                position: state.corners[position].position,
-                piece: state.corners[source].piece,
-                orientation:
-                    (state.corners[source].orientation + twist) % 3
-            })
-        );
-
-        next.edges = table.edges.map(
-            ([source, flip], position) => ({
-                position: state.edges[position].position,
-                piece: state.edges[source].piece,
-                orientation:
-                    (state.edges[source].orientation + flip) % 2
-            })
-        );
-
-        return next;
+            edges: table.edges.map(
+                ([source, flip], position) => ({
+                    position: state.edges[position].position,
+                    piece: state.edges[source].piece,
+                    orientation:
+                        (state.edges[source].orientation + flip) % 2
+                })
+            )
+        };
     }
 
     // ============================================================
