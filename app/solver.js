@@ -428,32 +428,98 @@ const RUBIX_SOLVER = (() => {
     // R2 = R R
     // ============================================================
 
+    // ============================================================
+    // PRECOMPUTED MOVE TABLES
+    //
+    // Build direct transition tables for all 18 legal moves.
+    // This preserves the existing MOVE_TABLE as the source of truth
+    // while avoiding repeated applySolverMove() calls for R2/R'/etc.
+    // ============================================================
+
+    function composeMoveTables(first, second) {
+        return {
+            corners: first.corners.map(
+                ([source, twist], position) => {
+                    const [secondSource, secondTwist] =
+                        second.corners[source];
+
+                    return [
+                        secondSource,
+                        (twist + secondTwist) % 3
+                    ];
+                }
+            ),
+
+            edges: first.edges.map(
+                ([source, flip], position) => {
+                    const [secondSource, secondFlip] =
+                        second.edges[source];
+
+                    return [
+                        secondSource,
+                        (flip + secondFlip) % 2
+                    ];
+                }
+            )
+        };
+    }
+
+    function buildMoveTables() {
+        const tables = {};
+
+        for (const face of faces) {
+            const base = MOVE_TABLE[face];
+
+            const doubleMove =
+                composeMoveTables(base, base);
+
+            const tripleMove =
+                composeMoveTables(doubleMove, base);
+
+            tables[face] = base;
+            tables[face + "2"] = doubleMove;
+            tables[face + "'"] = tripleMove;
+        }
+
+        return tables;
+    }
+
+    const ALL_MOVE_TABLES = buildMoveTables();
+
+    function applyMoveWithTable(state, table) {
+        return {
+            corners: table.corners.map(
+                ([source, twist], position) => ({
+                    position: state.corners[position].position,
+                    piece: state.corners[source].piece,
+                    orientation:
+                        (state.corners[source].orientation + twist) % 3
+                })
+            ),
+
+            edges: table.edges.map(
+                ([source, flip], position) => ({
+                    position: state.edges[position].position,
+                    piece: state.edges[source].piece,
+                    orientation:
+                        (state.edges[source].orientation + flip) % 2
+                })
+            )
+        };
+    }
+
     function applyMove(state, notation) {
         if (typeof notation !== "string" || notation.length === 0) {
             throw new Error("Move notation must be a non-empty string.");
         }
 
-        const face = notation[0].toUpperCase();
+        const table = ALL_MOVE_TABLES[notation];
 
-        if (!MOVE_TABLE[face]) {
+        if (!table) {
             throw new Error(`Invalid move notation: ${notation}`);
         }
 
-        let amount = 1;
-
-        if (notation.endsWith("2")) {
-            amount = 2;
-        } else if (notation.endsWith("'")) {
-            amount = 3;
-        }
-
-        let result = state;
-
-        for (let i = 0; i < amount; i++) {
-            result = applySolverMove(result, face);
-        }
-
-        return result;
+        return applyMoveWithTable(state, table);
     }
 
     // ============================================================
