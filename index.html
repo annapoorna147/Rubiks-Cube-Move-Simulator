@@ -380,6 +380,7 @@ button:active{
 
 <div class="actions">
 <button class="primary" onclick="scramble()">Scramble</button>
+<button class="primary" onclick="solveCurrentCubeUI()">Solve Cube</button>
 <button onclick="undo()">Undo</button>
 <button class="reset" onclick="resetCube()">Reset Cube</button>
 <button class="reset" onclick="runEngineTestsSafe()">🧪 Test Cube Engine</button>
@@ -392,6 +393,11 @@ button:active{
 <button class="reset" onclick="window.runSolverStateTest()">🧩 Test Solver State</button>
 <button class="reset" onclick="window.runCornerMappingTest()">📐 Test Corner Mapping</button>
 
+</div>
+
+<div class="info" id="solveResultPanel">
+<div class="label">SOLVER RESULT</div>
+<div class="data" id="solveResult">Press Solve Cube to preview a solution.</div>
 </div>
 
 <div class="info">
@@ -931,6 +937,64 @@ function updateUI(){
     }
 }
 
+
+/* ---------------------------------------------
+   SOLVE CUBE — DAY 13
+--------------------------------------------- */
+
+function solveCurrentCubeUI() {
+    const output = document.getElementById("solveResult");
+
+    if (!output) {
+        console.error("Solve result panel is missing.");
+        return;
+    }
+
+    if (
+        typeof RUBIX_CUBE_STATE === "undefined" ||
+        typeof RUBIX_SOLVER_STATE === "undefined" ||
+        typeof RUBIX_SOLVER === "undefined"
+    ) {
+        output.textContent = "Solver modules are not ready. Refresh and try again.";
+        return;
+    }
+
+    try {
+        const stickerState = RUBIX_CUBE_STATE.readState();
+        const solverState =
+            RUBIX_SOLVER_STATE.createFromStickerState(stickerState);
+
+        if (!solverState) {
+            output.textContent =
+                "Could not read the cube state. Check the cube and try again.";
+            return;
+        }
+
+        const validation = RUBIX_SOLVER.validateState(solverState);
+
+        if (!validation.valid) {
+            output.textContent = "Cube state is invalid: " + validation.error;
+            return;
+        }
+
+        const result = RUBIX_SOLVER.solve(solverState, 10);
+
+        if (!result.solved) {
+            output.textContent =
+                "No solution found within the current search limit (10 moves). " +
+                "This does not necessarily mean the cube state is impossible.";
+            return;
+        }
+
+        output.textContent =
+            "Solution found (" + result.depth + " moves):\n" +
+            (result.moves.length ? result.moves.join(" ") : "Cube is already solved.");
+    } catch (error) {
+        console.error("Solve Cube failed:", error);
+        output.textContent =
+            "Could not solve this cube state. Check the browser console for details.";
+    }
+}
 
 /* ---------------------------------------------
    POINTER ROTATION
