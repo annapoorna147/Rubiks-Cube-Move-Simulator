@@ -398,6 +398,11 @@ button:active{
 <div class="info" id="solveResultPanel">
 <div class="label">SOLVER RESULT</div>
 <div class="data" id="solveResult">Press Solve Cube to preview a solution.</div>
+<div class="actions" style="margin-top:10px">
+<button class="primary" id="executeSolutionBtn" onclick="executeSolutionUI()">▶ Execute Solution</button>
+<button id="stopSolutionBtn" onclick="stopSolutionUI()" disabled>■ Stop</button>
+</div>
+<div class="data" id="playbackStatus" style="margin-top:8px">Solution playback idle.</div>
 </div>
 
 <div class="info">
@@ -939,6 +944,111 @@ function updateUI(){
 
 
 /* ---------------------------------------------
+   SOLUTION PLAYBACK — DAY 14
+--------------------------------------------- */
+
+let rubixLastSolution = [];
+let rubixPlaybackTimer = null;
+let rubixPlaybackIndex = 0;
+let rubixPlaybackMoves = [];
+
+function stopSolutionUI(message = "Playback stopped.") {
+    if (rubixPlaybackTimer !== null) {
+        clearInterval(rubixPlaybackTimer);
+        rubixPlaybackTimer = null;
+    }
+
+    const stopButton = document.getElementById("stopSolutionBtn");
+    const executeButton = document.getElementById("executeSolutionBtn");
+    const status = document.getElementById("playbackStatus");
+
+    if (stopButton) stopButton.disabled = true;
+    if (executeButton) executeButton.disabled = false;
+    if (status) status.textContent = message;
+}
+
+function executeSolutionUI() {
+    if (rubixPlaybackTimer !== null) {
+        stopSolutionUI("Playback was already running.");
+        return;
+    }
+
+    if (!rubixLastSolution.length) {
+        const status = document.getElementById("playbackStatus");
+        if (status) status.textContent = "Find a solution first using Solve Cube.";
+        return;
+    }
+
+    const stickerState = RUBIX_CUBE_STATE.readState();
+    const solverState =
+        RUBIX_SOLVER_STATE.createFromStickerState(stickerState);
+
+    if (!solverState || RUBIX_SOLVER.isSolved(solverState)) {
+        const status = document.getElementById("playbackStatus");
+        if (status) {
+            status.textContent = solverState
+                ? "Cube is already solved."
+                : "Could not read the current cube state.";
+        }
+        return;
+    }
+
+    rubixPlaybackMoves = [...rubixLastSolution];
+    rubixPlaybackIndex = 0;
+
+    const stopButton = document.getElementById("stopSolutionBtn");
+    const executeButton = document.getElementById("executeSolutionBtn");
+    const status = document.getElementById("playbackStatus");
+
+    if (stopButton) stopButton.disabled = false;
+    if (executeButton) executeButton.disabled = true;
+
+    const originalHistory = [...history];
+    const originalTimerRunning = timerRunning;
+
+    const step = () => {
+        if (rubixPlaybackIndex >= rubixPlaybackMoves.length) {
+            const finalState = RUBIX_SOLVER_STATE.createFromStickerState(
+                RUBIX_CUBE_STATE.readState()
+            );
+
+            const solved = !!finalState && RUBIX_SOLVER.isSolved(finalState);
+
+            history = originalHistory;
+            updateUI();
+            timerRunning = originalTimerRunning;
+
+            stopSolutionUI(
+                solved
+                    ? "Playback complete — cube solved!"
+                    : "Playback ended, but the cube is not solved. Check move conventions."
+            );
+            return;
+        }
+
+        const notation = rubixPlaybackMoves[rubixPlaybackIndex];
+        move(notation, 1, false);
+        rubixPlaybackIndex++;
+
+        if (status) {
+            status.textContent =
+                "Executing " + rubixPlaybackIndex + " of " +
+                rubixPlaybackMoves.length + ": " + notation;
+        }
+
+        if (rubixPlaybackIndex >= rubixPlaybackMoves.length) {
+            clearInterval(rubixPlaybackTimer);
+            rubixPlaybackTimer = null;
+
+            // Verify on the next event-loop turn after the final move.
+            setTimeout(step, 80);
+        }
+    };
+
+    rubixPlaybackTimer = setInterval(step, 450);
+}
+
+/* ---------------------------------------------
    SOLVE CUBE — DAY 13
 --------------------------------------------- */
 
@@ -986,9 +1096,17 @@ function solveCurrentCubeUI() {
             return;
         }
 
+        rubixLastSolution = [...result.moves];
         output.textContent =
             "Solution found (" + result.depth + " moves):\n" +
             (result.moves.length ? result.moves.join(" ") : "Cube is already solved.");
+
+        const playbackStatus = document.getElementById("playbackStatus");
+        if (playbackStatus) {
+            playbackStatus.textContent = result.moves.length
+                ? "Ready to execute " + result.moves.length + " moves."
+                : "Cube is already solved.";
+        }
     } catch (error) {
         console.error("Solve Cube failed:", error);
         output.textContent =
