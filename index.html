@@ -944,112 +944,178 @@ function updateUI(){
 
 
 /* ---------------------------------------------
-   SOLUTION PLAYBACK — DAY 14
+   SOLUTION PLAYBACK — DAY 15
 --------------------------------------------- */
 
 let rubixLastSolution = [];
+let rubixSolutionFingerprint = null;
 let rubixPlaybackTimer = null;
+let rubixPlaybackVerifyTimer = null;
 let rubixPlaybackIndex = 0;
 let rubixPlaybackMoves = [];
+let rubixPlaybackRunId = 0;
+
+function rubixCurrentFingerprint() {
+    return JSON.stringify(RUBIX_CUBE_STATE.readState());
+}
+
+function rubixSetPlaybackStatus(message) {
+    const status = document.getElementById("playbackStatus");
+    if (status) status.textContent = message;
+}
+
+function rubixInvalidateSolution(message) {
+    rubixLastSolution = [];
+    rubixSolutionFingerprint = null;
+    rubixSetPlaybackStatus(message);
+}
 
 function stopSolutionUI(message = "Playback stopped.") {
+    // Invalidate callbacks from the current playback run.
+    rubixPlaybackRunId++;
+
     if (rubixPlaybackTimer !== null) {
         clearInterval(rubixPlaybackTimer);
         rubixPlaybackTimer = null;
     }
 
+    if (rubixPlaybackVerifyTimer !== null) {
+        clearTimeout(rubixPlaybackVerifyTimer);
+        rubixPlaybackVerifyTimer = null;
+    }
+
     const stopButton = document.getElementById("stopSolutionBtn");
     const executeButton = document.getElementById("executeSolutionBtn");
-    const status = document.getElementById("playbackStatus");
 
     if (stopButton) stopButton.disabled = true;
     if (executeButton) executeButton.disabled = false;
-    if (status) status.textContent = message;
+
+    rubixSetPlaybackStatus(message);
 }
 
 function executeSolutionUI() {
-    if (rubixPlaybackTimer !== null) {
-        stopSolutionUI("Playback was already running.");
+    if (rubixPlaybackTimer !== null || rubixPlaybackVerifyTimer !== null) {
+        rubixSetPlaybackStatus("Playback is already running.");
         return;
     }
 
-    if (!rubixLastSolution.length) {
-        const status = document.getElementById("playbackStatus");
-        if (status) status.textContent = "Find a solution first using Solve Cube.";
+    let currentFingerprint;
+
+    try {
+        currentFingerprint = rubixCurrentFingerprint();
+    } catch (error) {
+        rubixSetPlaybackStatus("Could not read the current cube state.");
+        console.error("Playback state read failed:", error);
         return;
     }
 
-    const stickerState = RUBIX_CUBE_STATE.readState();
-    const solverState =
-        RUBIX_SOLVER_STATE.createFromStickerState(stickerState);
+    if (rubixSolutionFingerprint === null) {
+        const state = RUBIX_SOLVER_STATE.createFromStickerState(
+            RUBIX_CUBE_STATE.readState()
+        );
 
-    if (!solverState || RUBIX_SOLVER.isSolved(solverState)) {
-        const status = document.getElementById("playbackStatus");
-        if (status) {
-            status.textContent = solverState
+        rubixSetPlaybackStatus(
+            state && RUBIX_SOLVER.isSolved(state)
                 ? "Cube is already solved."
-                : "Could not read the current cube state.";
-        }
+                : "Find a solution first using Solve Cube."
+        );
+        return;
+    }
+
+    if (currentFingerprint !== rubixSolutionFingerprint) {
+        rubixInvalidateSolution(
+            "Cube changed since solving. Click Solve Cube again."
+        );
+        return;
+    }
+
+    if (rubixLastSolution.length === 0) {
+        rubixSetPlaybackStatus("Cube is already solved.");
         return;
     }
 
     rubixPlaybackMoves = [...rubixLastSolution];
     rubixPlaybackIndex = 0;
 
+    const runId = ++rubixPlaybackRunId;
+    const originalHistory = [...history];
+    const originalTimerRunning = timerRunning;
+
     const stopButton = document.getElementById("stopSolutionBtn");
     const executeButton = document.getElementById("executeSolutionBtn");
-    const status = document.getElementById("playbackStatus");
 
     if (stopButton) stopButton.disabled = false;
     if (executeButton) executeButton.disabled = true;
 
-    const originalHistory = [...history];
-    const originalTimerRunning = timerRunning;
+    function finishPlayback() {
+        if (runId !== rubixPlaybackRunId) return;
 
-    const step = () => {
-        if (rubixPlaybackIndex >= rubixPlaybackMoves.length) {
+        rubixPlaybackTimer = null;
+        rubixPlaybackVerifyTimer = null;
+
+        let solved = false;
+
+        try {
             const finalState = RUBIX_SOLVER_STATE.createFromStickerState(
                 RUBIX_CUBE_STATE.readState()
             );
+            solved = !!finalState && RUBIX_SOLVER.isSolved(finalState);
+        } catch (error) {
+            console.error("Playback verification failed:", error);
+        }
 
-            const solved = !!finalState && RUBIX_SOLVER.isSolved(finalState);
+        history = originalHistory;
+        updateUI();
+        timerRunning = originalTimerRunning;
 
-            history = originalHistory;
-            updateUI();
-            timerRunning = originalTimerRunning;
+        stopSolutionUI(
+            solved
+                ? "Playback complete — cube solved!"
+                : "Playback ended, but the cube is not solved. Check move conventions."
+        );
+    }
 
-            stopSolutionUI(
-                solved
-                    ? "Playback complete — cube solved!"
-                    : "Playback ended, but the cube is not solved. Check move conventions."
-            );
+    function step() {
+        if (runId !== rubixPlaybackRunId) return;
+
+        if (rubixPlaybackIndex >= rubixPlaybackMoves.length) {
+            finishPlayback();
             return;
         }
 
         const notation = rubixPlaybackMoves[rubixPlaybackIndex];
-        move(notation, 1, false);
+
+        try {
+            move(notation, 1, false);
+        } catch (error) {
+            console.error("Playback move failed:", error);
+            stopSolutionUI("Playback failed. Check the browser console.");
+            return;
+        }
+
         rubixPlaybackIndex++;
 
-        if (status) {
-            status.textContent =
-                "Executing " + rubixPlaybackIndex + " of " +
-                rubixPlaybackMoves.length + ": " + notation;
-        }
+        rubixSetPlaybackStatus(
+            "Executing " + rubixPlaybackIndex + " of " +
+            rubixPlaybackMoves.length + ": " + notation
+        );
 
         if (rubixPlaybackIndex >= rubixPlaybackMoves.length) {
             clearInterval(rubixPlaybackTimer);
             rubixPlaybackTimer = null;
 
-            // Verify on the next event-loop turn after the final move.
-            setTimeout(step, 80);
+            rubixPlaybackVerifyTimer = setTimeout(() => {
+                if (runId !== rubixPlaybackRunId) return;
+                finishPlayback();
+            }, 80);
         }
-    };
+    }
 
     rubixPlaybackTimer = setInterval(step, 450);
 }
 
 /* ---------------------------------------------
-   SOLVE CUBE — DAY 13
+   SOLVE CUBE — DAY 15
 --------------------------------------------- */
 
 function solveCurrentCubeUI() {
@@ -1065,9 +1131,18 @@ function solveCurrentCubeUI() {
         typeof RUBIX_SOLVER_STATE === "undefined" ||
         typeof RUBIX_SOLVER === "undefined"
     ) {
+        rubixInvalidateSolution("Solver modules are not ready. Refresh and try again.");
         output.textContent = "Solver modules are not ready. Refresh and try again.";
         return;
     }
+
+    if (rubixPlaybackTimer !== null || rubixPlaybackVerifyTimer !== null) {
+        stopSolutionUI("Playback cancelled. Solve the current cube again.");
+    }
+
+    // Never keep an old solution after a new solve attempt fails.
+    rubixLastSolution = [];
+    rubixSolutionFingerprint = null;
 
     try {
         const stickerState = RUBIX_CUBE_STATE.readState();
@@ -1077,6 +1152,7 @@ function solveCurrentCubeUI() {
         if (!solverState) {
             output.textContent =
                 "Could not read the cube state. Check the cube and try again.";
+            rubixSetPlaybackStatus("Cube state could not be read.");
             return;
         }
 
@@ -1084,6 +1160,7 @@ function solveCurrentCubeUI() {
 
         if (!validation.valid) {
             output.textContent = "Cube state is invalid: " + validation.error;
+            rubixSetPlaybackStatus("Cube state is invalid.");
             return;
         }
 
@@ -1093,24 +1170,29 @@ function solveCurrentCubeUI() {
             output.textContent =
                 "No solution found within the current search limit (10 moves). " +
                 "This does not necessarily mean the cube state is impossible.";
+            rubixSetPlaybackStatus("No solution found within the current search limit.");
             return;
         }
 
         rubixLastSolution = [...result.moves];
+        rubixSolutionFingerprint = rubixCurrentFingerprint();
+
         output.textContent =
             "Solution found (" + result.depth + " moves):\n" +
             (result.moves.length ? result.moves.join(" ") : "Cube is already solved.");
 
-        const playbackStatus = document.getElementById("playbackStatus");
-        if (playbackStatus) {
-            playbackStatus.textContent = result.moves.length
+        rubixSetPlaybackStatus(
+            result.moves.length
                 ? "Ready to execute " + result.moves.length + " moves."
-                : "Cube is already solved.";
-        }
+                : "Cube is already solved."
+        );
     } catch (error) {
+        rubixLastSolution = [];
+        rubixSolutionFingerprint = null;
         console.error("Solve Cube failed:", error);
         output.textContent =
             "Could not solve this cube state. Check the browser console for details.";
+        rubixSetPlaybackStatus("Solve failed. Check the browser console.");
     }
 }
 
