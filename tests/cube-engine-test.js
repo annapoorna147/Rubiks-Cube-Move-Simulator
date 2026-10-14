@@ -1,112 +1,90 @@
 /*
  * RUBIX Ultimate Edition
- * Cube Engine Verification
+ * Day 17 - Cube Engine Verification
  */
 
 const fs = require("fs");
+const vm = require("vm");
 
 let source = fs.readFileSync("app/cube-engine.js", "utf8");
 
-/*
- * Remove browser-only startup calls so the engine
- * can be evaluated for mathematical testing.
- */
 source = source
     .replace(/createSolvedCube\(\);\s*render\(\);/g, "")
     .replace(/console\.log\(.*?\);/g, "");
 
-global.window = {};
+const context = {
+    console,
+    window: {},
+    document: {
+        getElementById() {
+            return null;
+        }
+    }
+};
 
-eval(source);
+vm.createContext(context);
+vm.runInContext(source, context);
 
-function state() {
-    return JSON.stringify(stickers);
+const MOVES = vm.runInContext("MOVES", context);
+
+function resetCube() {
+    vm.runInContext("createSolvedCube()", context);
 }
 
-function test(name, fn) {
+function turn(face) {
+    context.testFace = face;
+    vm.runInContext("quarterTurn(testFace)", context);
+}
 
-    createSolvedCube();
-
-    const original = state();
-
-    fn();
-
-    const passed = state() === original;
-
-    console.log(
-        passed ? "✅ PASS" : "❌ FAIL",
-        name
-    );
-
-    return passed;
+function getState() {
+    return JSON.stringify(vm.runInContext("stickers", context));
 }
 
 let passed = 0;
 let total = 0;
 
+function test(name, fn) {
+    resetCube();
+    const original = getState();
 
-/* Four identical turns = solved */
+    try {
+        fn();
+        const success = getState() === original;
 
-for (const face of MOVES) {
+        console.log(success ? "✅ PASS" : "❌ FAIL", name);
+
+        if (success) passed++;
+    } catch (error) {
+        console.log("❌ ERROR", name, error.message);
+    }
 
     total++;
-
-    if (test(`${face} × 4`, () => {
-
-        for (let i = 0; i < 4; i++) {
-            quarterTurn(face);
-        }
-
-    })) {
-        passed++;
-    }
 }
 
-
-/* Move + inverse = solved */
+console.log("\nRUBIX DAY 17 - CUBE ENGINE TESTS\n");
 
 for (const face of MOVES) {
-
-    total++;
-
-    if (test(`${face} + ${face}′`, () => {
-
-        quarterTurn(face);
-
-        quarterTurn(face);
-        quarterTurn(face);
-        quarterTurn(face);
-
-    })) {
-        passed++;
-    }
+    test(`${face}: four quarter-turns`, () => {
+        for (let i = 0; i < 4; i++) turn(face);
+    });
 }
-
-
-/* Double turn twice = solved */
 
 for (const face of MOVES) {
-
-    total++;
-
-    if (test(`${face}2 + ${face}2`, () => {
-
-        quarterTurn(face);
-        quarterTurn(face);
-        quarterTurn(face);
-        quarterTurn(face);
-
-    })) {
-        passed++;
-    }
+    test(`${face}: turn plus inverse`, () => {
+        turn(face);
+        for (let i = 0; i < 3; i++) turn(face);
+    });
 }
 
-
-console.log("");
-console.log("================================");
-console.log(`RUBIX ENGINE: ${passed}/${total} TESTS PASSED`);
-console.log("================================");
-
-if (passed !== total) {
-    process.exit(1);
+for (const face of MOVES) {
+    test(`${face}: four turns restore state`, () => {
+        turn(face);
+        turn(face);
+        turn(face);
+        turn(face);
+    });
 }
+
+console.log(`\nRUBIX ENGINE: ${passed}/${total} TESTS PASSED`);
+
+if (passed !== total) process.exitCode = 1;
