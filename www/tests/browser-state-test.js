@@ -1,0 +1,1078 @@
+/*
+ * RUBIX Ultimate Edition
+ * Browser Cube State Test
+ */
+
+
+/*
+ * ============================================================
+ * BASIC CUBE STATE TEST
+ * ============================================================
+ */
+
+window.runCubeStateTest = function(){
+
+    const results = [];
+
+    results.push([
+        "Cube State Adapter loaded",
+        typeof window.RUBIX_CUBE_STATE === "object"
+    ]);
+
+    results.push([
+        "Solver loaded",
+        typeof window.RUBIX_SOLVER === "object"
+    ]);
+
+    results.push([
+        "Solved state available",
+        typeof window.RUBIX_CUBE_STATE?.createSolvedState === "function"
+    ]);
+
+    results.push([
+        "Solver validation available",
+        typeof window.RUBIX_SOLVER?.validateState === "function"
+    ]);
+
+    const state =
+        window.RUBIX_CUBE_STATE?.createSolvedState();
+
+    const validation =
+        window.RUBIX_SOLVER?.validateState(state);
+
+    results.push([
+        "Solved state validates",
+        validation?.valid === true
+    ]);
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🧊 RUBIX STATE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX browser state test loaded.");
+
+function serializeVisibleCubeState() {
+    const stickerState = window.RUBIX_CUBE_STATE.readState();
+
+    if (!stickerState) {
+        throw new Error("Could not read visible cube sticker state.");
+    }
+
+    const solverState =
+        window.RUBIX_SOLVER_STATE.createFromStickerState(stickerState);
+
+    if (!solverState) {
+        throw new Error("Could not convert visible cube to solver state.");
+    }
+
+    return window.RUBIX_SOLVER.serialize(solverState);
+}
+
+
+
+/*
+ * ============================================================
+ * REAL CUBE STATE TEST
+ * ============================================================
+ */
+
+window.runRealCubeStateTest = function(){
+
+    const results = [];
+
+    if (typeof window.RUBIX_CUBE_STATE?.readState !== "function") {
+        alert("❌ readState() is not available.");
+        return;
+    }
+
+    if (typeof window.move !== "function") {
+        alert("❌ Cube move function is not available.");
+        return;
+    }
+
+    createCube();
+
+    const solvedState =
+        window.RUBIX_CUBE_STATE.readState();
+
+    const solvedSolverState =
+        window.RUBIX_SOLVER_STATE.createFromStickerState(solvedState);
+
+    const solvedValidation =
+        solvedSolverState
+            ? window.RUBIX_SOLVER.validateState(solvedSolverState)
+            : { valid: false, error: "Solver-state conversion failed." };
+
+    results.push([
+        "Solved cube produces 54 stickers",
+        solvedState &&
+        Object.values(solvedState).every(face =>
+            Array.isArray(face) &&
+            face.length === 9 &&
+            face.every(Boolean)
+        )
+    ]);
+
+    results.push([
+        "Solved state validates",
+        solvedValidation.valid === true
+    ]);
+
+    const original =
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(solvedState)
+        );
+
+    move("R");
+
+    const afterR =
+        window.RUBIX_CUBE_STATE.readState();
+
+    results.push([
+        "R changes cube state",
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterR)
+        ) !== original
+    ]);
+
+    move("R", 3);
+
+    const afterRPrime =
+        window.RUBIX_CUBE_STATE.readState();
+
+    results.push([
+        "R followed by R' restores state",
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterRPrime)
+        ) === original
+    ]);
+
+    move("F");
+
+    const afterF =
+        window.RUBIX_CUBE_STATE.readState();
+
+    results.push([
+        "F changes cube state",
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterF)
+        ) !== original
+    ]);
+
+    move("F", 3);
+
+    const afterFPrime =
+        window.RUBIX_CUBE_STATE.readState();
+
+    results.push([
+        "F followed by F' restores state",
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterFPrime)
+        ) === original
+    ]);
+
+    move("U");
+
+    const afterU =
+        window.RUBIX_CUBE_STATE.readState();
+
+    results.push([
+        "U changes cube state",
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterU)
+        ) !== original
+    ]);
+
+    move("U", 3);
+
+    const afterUPrime =
+        window.RUBIX_CUBE_STATE.readState();
+
+    results.push([
+        "U followed by U' restores state",
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterUPrime)
+        ) === original
+    ]);
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🧊 REAL CUBE STATE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+
+    createCube();
+    updateUI();
+};
+
+
+/*
+ * ============================================================
+ * ALL SIX FACE MOVE TEST
+ * ============================================================
+ */
+
+window.runAllFaceMoveTest = function(){
+
+    const faces = ["R", "L", "F", "B", "U", "D"];
+    const results = [];
+
+    createCube();
+
+    const original =
+        serializeVisibleCubeState();
+
+    for (const face of faces) {
+
+        createCube();
+
+        const before =
+            serializeVisibleCubeState();
+
+        move(face);
+
+        const after =
+            serializeVisibleCubeState();
+
+        results.push([
+            `${face} changes cube state`,
+            after !== before
+        ]);
+
+        move(face, 3);
+
+        const restored =
+            serializeVisibleCubeState();
+
+        results.push([
+            `${face} followed by ${face}' restores state`,
+            restored === before
+        ]);
+    }
+
+    createCube();
+    updateUI();
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🧊 ALL SIX FACE MOVE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX all-six-face move test loaded.");
+
+
+/*
+ * ============================================================
+ * DOUBLE MOVE TEST
+ * ============================================================
+ */
+
+window.runDoubleMoveTest = function(){
+
+    const faces = ["R", "L", "F", "B", "U", "D"];
+    const results = [];
+
+    for (const face of faces) {
+
+        createCube();
+
+        const original =
+            serializeVisibleCubeState();
+
+        move(face, 2);
+
+        const afterDouble =
+            serializeVisibleCubeState();
+
+        results.push([
+            `${face}2 changes cube state`,
+            afterDouble !== original
+        ]);
+
+        move(face, 2);
+
+        const restored =
+            serializeVisibleCubeState();
+
+        results.push([
+            `${face}2 followed by ${face}2 restores state`,
+            restored === original
+        ]);
+    }
+
+    createCube();
+    updateUI();
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🔄 DOUBLE MOVE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX double-move test loaded.");
+
+
+/*
+ * ============================================================
+ * MOVE SEQUENCE TEST
+ * ============================================================
+ */
+
+window.runSequenceTest = function(){
+
+    createCube();
+
+    const original =
+        serializeVisibleCubeState();
+
+    const sequence = [
+        ["R", 1],
+        ["U", 1],
+        ["F", 1],
+        ["L", 1],
+        ["D", 1],
+        ["B", 1]
+    ];
+
+    const inverse = [
+        ["B", 3],
+        ["D", 3],
+        ["L", 3],
+        ["F", 3],
+        ["U", 3],
+        ["R", 3]
+    ];
+
+    const results = [];
+
+    for (const [face, amount] of sequence) {
+        move(face, amount);
+    }
+
+    const scrambled =
+        serializeVisibleCubeState();
+
+    results.push([
+        "Mixed sequence changes cube state",
+        scrambled !== original
+    ]);
+
+    for (const [face, amount] of inverse) {
+        move(face, amount);
+    }
+
+    const restored =
+        serializeVisibleCubeState();
+
+    results.push([
+        "Exact inverse sequence restores state",
+        restored === original
+    ]);
+
+    createCube();
+    updateUI();
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🔀 MOVE SEQUENCE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX sequence test loaded.");
+
+
+/*
+ * ============================================================
+ * SOLVED STATE TEST
+ * ============================================================
+ */
+
+window.runSolvedStateTest = function(){
+
+    const results = [];
+
+    createCube();
+
+    results.push([
+        "Fresh cube is solved",
+        window.RUBIX_CUBE_STATE.isSolved() === true
+    ]);
+
+    move("R");
+
+    results.push([
+        "R move makes cube unsolved",
+        window.RUBIX_CUBE_STATE.isSolved() === false
+    ]);
+
+    move("R", 3);
+
+    results.push([
+        "R followed by R' makes cube solved",
+        window.RUBIX_CUBE_STATE.isSolved() === true
+    ]);
+
+    move("F");
+    move("U");
+    move("L");
+
+    results.push([
+        "Mixed sequence makes cube unsolved",
+        window.RUBIX_CUBE_STATE.isSolved() === false
+    ]);
+
+    move("L", 3);
+    move("U", 3);
+    move("F", 3);
+
+    results.push([
+        "Exact inverse restores solved state",
+        window.RUBIX_CUBE_STATE.isSolved() === true
+    ]);
+
+    createCube();
+    updateUI();
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🧊 SOLVED STATE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX solved-state test loaded.");
+
+
+/*
+ * ============================================================
+ * SOLVER STATE TEST
+ * ============================================================
+ */
+
+window.runSolverStateTest = function(){
+
+    const results = [];
+
+    const solverState =
+        window.RUBIX_SOLVER_STATE;
+
+    results.push([
+        "Solver-state module loaded",
+        typeof solverState === "object"
+    ]);
+
+    results.push([
+        "8 corner positions defined",
+        Array.isArray(solverState?.corners) &&
+        solverState.corners.length === 8
+    ]);
+
+    results.push([
+        "12 edge positions defined",
+        Array.isArray(solverState?.edges) &&
+        solverState.edges.length === 12
+    ]);
+
+    const solved =
+        solverState?.createSolvedState();
+
+    results.push([
+        "Solved state contains 8 corners",
+        solved?.corners?.length === 8
+    ]);
+
+    results.push([
+        "Solved state contains 12 edges",
+        solved?.edges?.length === 12
+    ]);
+
+    results.push([
+        "All corner orientations are 0",
+        solved?.corners?.every(
+            corner => corner.orientation === 0
+        ) === true
+    ]);
+
+    results.push([
+        "All edge orientations are 0",
+        solved?.edges?.every(
+            edge => edge.orientation === 0
+        ) === true
+    ]);
+
+    const validation =
+        solverState?.validate(solved);
+
+    results.push([
+        "Solved cubie state validates",
+        validation?.valid === true
+    ]);
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total = results.length;
+
+    const message = results
+        .map(result =>
+            `${result[1] ? "✅" : "❌"} ${result[0]}`
+        )
+        .join("\n");
+
+    alert(
+`🧩 SOLVER STATE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+};
+
+console.log("RUBIX solver-state test loaded.");
+
+
+/*
+ * ============================================================
+ * CORNER MAPPING TEST
+ * ============================================================
+ *
+ * IMPORTANT:
+ *
+ * identifyCornerPieces() expects a REAL 54-sticker cube state.
+ *
+ * Therefore we use:
+ *
+ *     RUBIX_CUBE_STATE.createSolvedState()
+ *
+ * NOT:
+ *
+ *     RUBIX_SOLVER_STATE.createSolvedState()
+ *
+ * The latter creates an 8-corner / 12-edge cubie state.
+ */
+
+window.runCornerMappingTest = function(){
+
+    const solverState =
+        window.RUBIX_SOLVER_STATE;
+
+    const cubeState =
+        window.RUBIX_CUBE_STATE;
+
+    const results = [];
+
+    // ----------------------------------------------------------
+    // Module checks
+    // ----------------------------------------------------------
+
+    results.push([
+        "Solver-state module loaded",
+        typeof solverState === "object"
+    ]);
+
+    results.push([
+        "Cube-state module loaded",
+        typeof cubeState === "object"
+    ]);
+
+    // ----------------------------------------------------------
+    // Expected corner color definitions
+    // ----------------------------------------------------------
+
+    const expectedCorners = {
+
+        UFR: [
+            "white",
+            "red",
+            "green"
+        ],
+
+        URB: [
+            "white",
+            "red",
+            "blue"
+        ],
+
+        UBL: [
+            "white",
+            "blue",
+            "orange"
+        ],
+
+        ULF: [
+            "white",
+            "orange",
+            "green"
+        ],
+
+        DFR: [
+            "yellow",
+            "red",
+            "green"
+        ],
+
+        DRB: [
+            "yellow",
+            "red",
+            "blue"
+        ],
+
+        DBL: [
+            "yellow",
+            "blue",
+            "orange"
+        ],
+
+        DLF: [
+            "yellow",
+            "orange",
+            "green"
+        ]
+    };
+
+    // ----------------------------------------------------------
+    // Verify color map
+    // ----------------------------------------------------------
+
+    results.push([
+        "Corner color map loaded",
+        typeof solverState?.cornerColors === "object"
+    ]);
+
+    for (
+        const [position, colors]
+        of Object.entries(expectedCorners)
+    ) {
+
+        results.push([
+            `${position} corner colors defined`,
+            JSON.stringify(
+                solverState?.cornerColors?.[position]
+            ) === JSON.stringify(colors)
+        ]);
+    }
+
+    // ----------------------------------------------------------
+    // Create REAL 54-sticker solved state
+    // ----------------------------------------------------------
+
+    const solvedStickerState =
+        cubeState?.createSolvedState();
+
+    results.push([
+        "Solved 54-sticker state created",
+        solvedStickerState &&
+        typeof solvedStickerState === "object" &&
+        ["U", "R", "F", "D", "L", "B"].every(face =>
+            Array.isArray(solvedStickerState[face]) &&
+            solvedStickerState[face].length === 9
+        )
+    ]);
+
+    // ----------------------------------------------------------
+    // Identify all eight corners
+    // ----------------------------------------------------------
+
+    const solved =
+        solverState?.identifyCornerPieces(
+            solvedStickerState
+        );
+
+    results.push([
+        "8 corner entries returned",
+        Array.isArray(solved) &&
+        solved.length === 8
+    ]);
+
+    // ----------------------------------------------------------
+    // Verify all corner positions
+    // ----------------------------------------------------------
+
+    results.push([
+        "All corner positions returned",
+        Array.isArray(solved) &&
+        Object.keys(expectedCorners).every(position =>
+            solved.some(
+                corner =>
+                    corner.position === position
+            )
+        )
+    ]);
+
+    // ----------------------------------------------------------
+    // Verify physical piece identity
+    // ----------------------------------------------------------
+
+    if (Array.isArray(solved)) {
+
+        for (const position of Object.keys(expectedCorners)) {
+
+            const corner =
+                solved.find(
+                    item =>
+                        item.position === position
+                );
+
+            results.push([
+                `${position} piece correctly identified`,
+                corner?.piece === position
+            ]);
+
+            results.push([
+                `${position} orientation is 0`,
+                corner?.orientation === 0
+            ]);
+        }
+    }
+
+    // ----------------------------------------------------------
+    // Final result
+    // ----------------------------------------------------------
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total =
+        results.length;
+
+    const message =
+        results
+            .map(result =>
+                `${result[1] ? "✅" : "❌"} ${result[0]}`
+            )
+            .join("\n");
+
+    alert(
+`📐 CORNER MAPPING TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+
+    console.log(
+        "RUBIX Corner Mapping Test:",
+        `${passed}/${total} passed`
+    );
+
+    return {
+        passed: passed,
+        total: total,
+        success: passed === total,
+        results: results
+    };
+};
+
+console.log("RUBIX corner mapping test loaded.");
+window.runCornerRMoveTest = function(){
+
+    const solverState = window.RUBIX_SOLVER_STATE;
+    const cubeState = window.RUBIX_CUBE_STATE;
+
+    createCube();
+    move("R");
+
+    const corners =
+        solverState.identifyCornerPieces(
+            cubeState.readState()
+        );
+
+    const expected = {
+        UFR: ["URB", 2],
+        URB: ["DRB", 2],
+        UBL: ["UBL", 0],
+        ULF: ["ULF", 0],
+        DFR: ["UFR", 2],
+        DRB: ["DFR", 2],
+        DBL: ["DBL", 0],
+        DLF: ["DLF", 0]
+    };
+
+    const results = [];
+
+    results.push([
+        "R move returns 8 corners",
+        Array.isArray(corners) &&
+        corners.length === 8
+    ]);
+
+    for (const [position, expectedValue] of Object.entries(expected)) {
+
+        const corner =
+            corners?.find(
+                item =>
+                    item.position === position
+            );
+
+        results.push([
+            `${position} piece after R`,
+            corner?.piece === expectedValue[0]
+        ]);
+
+        results.push([
+            `${position} orientation after R`,
+            corner?.orientation === expectedValue[1]
+        ]);
+    }
+
+    createCube();
+    updateUI();
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total =
+        results.length;
+
+    const message =
+        results
+            .map(result =>
+                `${result[1] ? "✅" : "❌"} ${result[0]}`
+            )
+            .join("\n");
+
+    alert(
+`🔄 CORNER R-MOVE TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+
+    console.log(
+        "RUBIX Corner R-Move Test:",
+        `${passed}/${total} passed`
+    );
+
+    return {
+        passed: passed,
+        total: total,
+        success: passed === total,
+        results: results
+    };
+};
+
+console.log("RUBIX corner R-move test loaded.");
+
+window.runCornerOrientationTest = async function(){
+
+    const solverState = window.RUBIX_SOLVER_STATE;
+    const cubeState = window.RUBIX_CUBE_STATE;
+
+    const testCases = {
+        U: {
+            affected: ["UFR","URB","UBL","ULF"],
+            orientation: 0
+        },
+        D: {
+            affected: ["DFR","DRB","DBL","DLF"],
+            orientation: 0
+        },
+        R: {
+            affected: ["UFR","URB","DFR","DRB"],
+            orientation: 2
+        },
+        L: {
+            affected: ["UBL","ULF","DBL","DLF"],
+            orientation: 2
+        },
+        F: {
+            affected: ["UFR","ULF","DFR","DLF"],
+            orientation: 1
+        },
+        B: {
+            affected: ["URB","UBL","DRB","DBL"],
+            orientation: 1
+        }
+    };
+
+    const allCorners = [
+        "UFR","URB","UBL","ULF",
+        "DFR","DRB","DBL","DLF"
+    ];
+
+    const results = [];
+
+    for (const [moveNotation, testCase] of Object.entries(testCases)) {
+
+        createCube();
+        move(moveNotation);
+
+        await new Promise(resolve =>
+            setTimeout(resolve, 800)
+        );
+
+        const corners =
+            solverState.identifyCornerPieces(
+                cubeState.readState()
+            );
+
+        results.push([
+            `${moveNotation} returns 8 corners`,
+            Array.isArray(corners) &&
+            corners.length === 8
+        ]);
+
+        for (const position of allCorners) {
+
+            const corner =
+                corners?.find(
+                    item =>
+                        item.position === position
+                );
+
+            const expectedOrientation =
+                testCase.affected.includes(position)
+                    ? testCase.orientation
+                    : 0;
+
+            results.push([
+                `${moveNotation}: ${position} orientation`,
+                corner?.orientation === expectedOrientation
+            ]);
+        }
+    }
+
+    createCube();
+    updateUI();
+
+    const passed =
+        results.filter(result => result[1]).length;
+
+    const total =
+        results.length;
+
+    const message =
+        results
+            .map(result =>
+                `${result[1] ? "✅" : "❌"} ${result[0]}`
+            )
+            .join("\n");
+
+    alert(
+`🧭 CORNER ORIENTATION TEST
+
+${message}
+
+----------------
+${passed}/${total} TESTS PASSED
+----------------`
+    );
+
+    console.log(
+        "RUBIX Corner Orientation Test:",
+        `${passed}/${total} passed`
+    );
+
+    return {
+        passed: passed,
+        total: total,
+        success: passed === total,
+        results: results
+    };
+};
+
+console.log("RUBIX corner orientation test loaded.");

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RUBIX Ultimate Edition</string>
+    <string name="title_activity_main">RUBIX Ultimate Edition</string>
+    <string name="package_name">com.annapoorna.rubix</string>
+    <string name="custom_url_scheme">com.annapoorna.rubix</string>
+</resources>
