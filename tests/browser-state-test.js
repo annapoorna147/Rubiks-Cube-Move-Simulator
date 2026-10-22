@@ -69,6 +69,24 @@ ${passed}/${total} TESTS PASSED
 
 console.log("RUBIX browser state test loaded.");
 
+function serializeVisibleCubeState() {
+    const stickerState = window.RUBIX_CUBE_STATE.readState();
+
+    if (!stickerState) {
+        throw new Error("Could not read visible cube sticker state.");
+    }
+
+    const solverState =
+        window.RUBIX_SOLVER_STATE.createFromStickerState(stickerState);
+
+    if (!solverState) {
+        throw new Error("Could not convert visible cube to solver state.");
+    }
+
+    return window.RUBIX_SOLVER.serialize(solverState);
+}
+
+
 
 /*
  * ============================================================
@@ -95,8 +113,13 @@ window.runRealCubeStateTest = function(){
     const solvedState =
         window.RUBIX_CUBE_STATE.readState();
 
+    const solvedSolverState =
+        window.RUBIX_SOLVER_STATE.createFromStickerState(solvedState);
+
     const solvedValidation =
-        window.RUBIX_SOLVER.validateState(solvedState);
+        solvedSolverState
+            ? window.RUBIX_SOLVER.validateState(solvedSolverState)
+            : { valid: false, error: "Solver-state conversion failed." };
 
     results.push([
         "Solved cube produces 54 stickers",
@@ -114,7 +137,9 @@ window.runRealCubeStateTest = function(){
     ]);
 
     const original =
-        window.RUBIX_SOLVER.serialize(solvedState);
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(solvedState)
+        );
 
     move("R");
 
@@ -123,7 +148,9 @@ window.runRealCubeStateTest = function(){
 
     results.push([
         "R changes cube state",
-        window.RUBIX_SOLVER.serialize(afterR) !== original
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterR)
+        ) !== original
     ]);
 
     move("R", 3);
@@ -133,7 +160,9 @@ window.runRealCubeStateTest = function(){
 
     results.push([
         "R followed by R' restores state",
-        window.RUBIX_SOLVER.serialize(afterRPrime) === original
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterRPrime)
+        ) === original
     ]);
 
     move("F");
@@ -143,7 +172,9 @@ window.runRealCubeStateTest = function(){
 
     results.push([
         "F changes cube state",
-        window.RUBIX_SOLVER.serialize(afterF) !== original
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterF)
+        ) !== original
     ]);
 
     move("F", 3);
@@ -153,7 +184,9 @@ window.runRealCubeStateTest = function(){
 
     results.push([
         "F followed by F' restores state",
-        window.RUBIX_SOLVER.serialize(afterFPrime) === original
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterFPrime)
+        ) === original
     ]);
 
     move("U");
@@ -163,7 +196,9 @@ window.runRealCubeStateTest = function(){
 
     results.push([
         "U changes cube state",
-        window.RUBIX_SOLVER.serialize(afterU) !== original
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterU)
+        ) !== original
     ]);
 
     move("U", 3);
@@ -173,7 +208,9 @@ window.runRealCubeStateTest = function(){
 
     results.push([
         "U followed by U' restores state",
-        window.RUBIX_SOLVER.serialize(afterUPrime) === original
+        window.RUBIX_SOLVER.serialize(
+            window.RUBIX_SOLVER_STATE.createFromStickerState(afterUPrime)
+        ) === original
     ]);
 
     const passed =
@@ -216,25 +253,19 @@ window.runAllFaceMoveTest = function(){
     createCube();
 
     const original =
-        window.RUBIX_SOLVER.serialize(
-            window.RUBIX_CUBE_STATE.readState()
-        );
+        serializeVisibleCubeState();
 
     for (const face of faces) {
 
         createCube();
 
         const before =
-            window.RUBIX_SOLVER.serialize(
-                window.RUBIX_CUBE_STATE.readState()
-            );
+            serializeVisibleCubeState();
 
         move(face);
 
         const after =
-            window.RUBIX_SOLVER.serialize(
-                window.RUBIX_CUBE_STATE.readState()
-            );
+            serializeVisibleCubeState();
 
         results.push([
             `${face} changes cube state`,
@@ -244,9 +275,7 @@ window.runAllFaceMoveTest = function(){
         move(face, 3);
 
         const restored =
-            window.RUBIX_SOLVER.serialize(
-                window.RUBIX_CUBE_STATE.readState()
-            );
+            serializeVisibleCubeState();
 
         results.push([
             `${face} followed by ${face}' restores state`,
@@ -298,16 +327,12 @@ window.runDoubleMoveTest = function(){
         createCube();
 
         const original =
-            window.RUBIX_SOLVER.serialize(
-                window.RUBIX_CUBE_STATE.readState()
-            );
+            serializeVisibleCubeState();
 
         move(face, 2);
 
         const afterDouble =
-            window.RUBIX_SOLVER.serialize(
-                window.RUBIX_CUBE_STATE.readState()
-            );
+            serializeVisibleCubeState();
 
         results.push([
             `${face}2 changes cube state`,
@@ -317,9 +342,7 @@ window.runDoubleMoveTest = function(){
         move(face, 2);
 
         const restored =
-            window.RUBIX_SOLVER.serialize(
-                window.RUBIX_CUBE_STATE.readState()
-            );
+            serializeVisibleCubeState();
 
         results.push([
             `${face}2 followed by ${face}2 restores state`,
@@ -366,9 +389,7 @@ window.runSequenceTest = function(){
     createCube();
 
     const original =
-        window.RUBIX_SOLVER.serialize(
-            window.RUBIX_CUBE_STATE.readState()
-        );
+        serializeVisibleCubeState();
 
     const sequence = [
         ["R", 1],
@@ -395,9 +416,7 @@ window.runSequenceTest = function(){
     }
 
     const scrambled =
-        window.RUBIX_SOLVER.serialize(
-            window.RUBIX_CUBE_STATE.readState()
-        );
+        serializeVisibleCubeState();
 
     results.push([
         "Mixed sequence changes cube state",
@@ -409,9 +428,7 @@ window.runSequenceTest = function(){
     }
 
     const restored =
-        window.RUBIX_SOLVER.serialize(
-            window.RUBIX_CUBE_STATE.readState()
-        );
+        serializeVisibleCubeState();
 
     results.push([
         "Exact inverse sequence restores state",
