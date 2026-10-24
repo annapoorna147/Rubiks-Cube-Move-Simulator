@@ -1,0 +1,9 @@
+{
+  "name": "rubix-core-rebuild",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Isolated RUBIX cube engine rebuild",
+  "scripts": {
+    "test": "node tests/run-tests.js && node tests/validation.test.js"
+  }
+}
