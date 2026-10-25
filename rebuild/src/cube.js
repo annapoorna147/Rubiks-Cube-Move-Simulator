@@ -140,11 +140,101 @@ function isSolved(cube) {
   });
 }
 
+
+function validateCubeStructure(cube) {
+  const errors = [];
+  const validColors = new Set(Object.values(FACE_COLORS));
+
+  if (!cube || !Array.isArray(cube.stickers)) {
+    return { valid: false, errors: ["Cube must contain a stickers array."] };
+  }
+
+  const stickers = cube.stickers;
+  if (stickers.length !== 54) {
+    errors.push(`Expected 54 stickers; found ${stickers.length}.`);
+  }
+
+  const colorCounts = new Map();
+  const stickerKeys = new Set();
+  const centerCounts = new Map();
+
+  for (let i = 0; i < stickers.length; i++) {
+    const s = stickers[i];
+
+    if (!s || typeof s !== "object") {
+      errors.push(`Sticker ${i} is not an object.`);
+      continue;
+    }
+
+    const { position, normal, color } = s;
+    const validVector = v =>
+      Array.isArray(v) &&
+      v.length === 3 &&
+      v.every(n => Number.isInteger(n) && n >= -1 && n <= 1);
+
+    if (!validVector(position) || !validVector(normal)) {
+      errors.push(`Sticker ${i} has an invalid position or normal.`);
+      continue;
+    }
+
+    if (normal.reduce((sum, n) => sum + n * n, 0) !== 1) {
+      errors.push(`Sticker ${i} has a non-unit face normal.`);
+      continue;
+    }
+
+    const dot = position.reduce((sum, n, j) => sum + n * normal[j], 0);
+    if (dot !== 1) {
+      errors.push(`Sticker ${i} is not on its indicated surface.`);
+    }
+
+    const key = [...position, ...normal].join(",");
+    if (stickerKeys.has(key)) {
+      errors.push(`Duplicate sticker location: ${key}.`);
+    }
+    stickerKeys.add(key);
+
+    if (!validColors.has(color)) {
+      errors.push(`Sticker ${i} has an unknown color.`);
+    } else {
+      colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+    }
+
+    if (position.every((n, j) => n === normal[j])) {
+      const centerKey = position.join(",");
+      centerCounts.set(centerKey, (centerCounts.get(centerKey) || 0) + 1);
+
+      const face = Object.keys(FACE_NORMALS).find(f =>
+        FACE_NORMALS[f].every((n, j) => n === normal[j])
+      );
+
+      if (face && color !== FACE_COLORS[face]) {
+        errors.push(`Center at ${centerKey} has the wrong color.`);
+      }
+    }
+  }
+
+  for (const color of validColors) {
+    if (colorCounts.get(color) !== 9) {
+      errors.push(
+        `Expected 9 ${color} stickers; found ${colorCounts.get(color) || 0}.`
+      );
+    }
+  }
+
+  if (centerCounts.size !== 6 ||
+      [...centerCounts.values()].some(count => count !== 1)) {
+    errors.push("Expected exactly one center sticker on each face.");
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 module.exports = {
   createSolvedCube,
   cloneCube,
   turn,
   serializeCube,
   isSolved,
-  FACE_NORMALS
+  FACE_NORMALS,
+  validateCubeStructure
 };
