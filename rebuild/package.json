@@ -4,6 +4,6 @@
   "private": true,
   "description": "Isolated RUBIX cube engine rebuild",
   "scripts": {
-    "test": "node tests/run-tests.js && node tests/validation.test.js && node tests/independent-orientation.test.js && node tests/cube-validation.test.js"
+    "test": "node tests/run-tests.js && node tests/validation.test.js && node tests/independent-orientation.test.js && node tests/cube-validation.test.js && node tests/physical-move-conventions.test.js"
   }
 }
