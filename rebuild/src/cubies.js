@@ -177,6 +177,34 @@ function calculateEdgeFlip(edge) {
   return orientation === -1 ? null : orientation;
 }
 
+function permutationParity(groups, predicate) {
+  const positions = groupStickersByPosition(createSolvedCube())
+    .filter(group => predicate(group.position))
+    .sort((a, b) => a.position.join(",").localeCompare(b.position.join(",")));
+
+  const pieces = groups
+    .filter(group => predicate(group.position))
+    .sort((a, b) => a.position.join(",").localeCompare(b.position.join(",")));
+
+  if (pieces.length !== positions.length) return null;
+
+  const identity = new Map(
+    positions.map((piece, index) => [colorKey(piece.stickers), index])
+  );
+  const permutation = pieces.map(piece => identity.get(colorKey(piece.stickers)));
+
+  if (permutation.some(value => value === undefined) ||
+      new Set(permutation).size !== permutation.length) return null;
+
+  let inversions = 0;
+  for (let i = 0; i < permutation.length; i++) {
+    for (let j = i + 1; j < permutation.length; j++) {
+      if (permutation[i] > permutation[j]) inversions++;
+    }
+  }
+  return inversions % 2;
+}
+
 function validateCubies(cube) {
   const structure = validateCubeStructure(cube);
 
@@ -211,6 +239,14 @@ function validateCubies(cube) {
     "edge",
     errors
   );
+
+  const cornerParity = permutationParity(groups, isCorner);
+  const edgeParity = permutationParity(groups, isEdge);
+
+  if (cornerParity !== null && edgeParity !== null &&
+      cornerParity !== edgeParity) {
+    errors.push("Corner and edge permutation parity must match.");
+  }
 
   const cornerTwists = corners.map(calculateCornerTwist);
   const edgeFlips = edges.map(calculateEdgeFlip);
