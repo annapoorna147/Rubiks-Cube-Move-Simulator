@@ -281,6 +281,66 @@ function validateCubies(cube) {
   };
 }
 
+function diagnoseCube(cube) {
+  const structure = validateCubeStructure(cube);
+
+  if (!structure.valid) {
+    return {
+      valid: false,
+      structure: { valid: false, errors: [...structure.errors] },
+      pieces: { valid: false, checked: false },
+      orientation: { valid: false, checked: false },
+      parity: { valid: false, checked: false },
+      errors: [...structure.errors]
+    };
+  }
+
+  const result = validateCubies(cube);
+  const errors = result.errors;
+
+  const parityErrors = errors.filter(error =>
+    error === "Corner and edge permutation parity must match."
+  );
+
+  const orientationErrors = errors.filter(error =>
+    error === "Could not determine the orientation of every corner." ||
+    error === "Corner twist sum must be divisible by 3." ||
+    error === "Could not determine the orientation of every edge." ||
+    error === "Edge flip sum must be even."
+  );
+
+  const pieceErrors = errors.filter(error =>
+    !parityErrors.includes(error) &&
+    !orientationErrors.includes(error)
+  );
+
+  return {
+    valid: result.valid,
+    structure: { valid: true, errors: [] },
+    pieces: {
+      valid: pieceErrors.length === 0,
+      checked: true,
+      corners: result.corners.length,
+      edges: result.edges.length,
+      errors: pieceErrors
+    },
+    orientation: {
+      valid: orientationErrors.length === 0,
+      checked: true,
+      cornerTwists: result.cornerTwists,
+      edgeFlips: result.edgeFlips,
+      errors: orientationErrors
+    },
+    parity: {
+      valid: parityErrors.length === 0,
+      checked: true,
+      errors: parityErrors
+    },
+    errors: [...errors]
+  };
+}
+
 module.exports = {
-  validateCubies
+  validateCubies,
+  diagnoseCube
 };
