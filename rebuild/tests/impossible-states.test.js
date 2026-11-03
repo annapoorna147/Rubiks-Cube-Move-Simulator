@@ -75,4 +75,62 @@ assert.ok(
 );
 
 console.log("PASS impossible two-edge swap is rejected");
+
+
+function rotateStickerNormals(cube, position) {
+  const stickers = stickersAt(cube, position);
+
+  assert.equal(stickers.length, 3);
+
+  const oldNormals = stickers.map(sticker => [...sticker.normal]);
+
+  for (let i = 0; i < stickers.length; i++) {
+    stickers[i].normal = [...oldNormals[(i + 1) % oldNormals.length]];
+  }
+}
+
+function flipEdge(cube, position) {
+  const stickers = stickersAt(cube, position);
+
+  assert.equal(stickers.length, 2);
+
+  const firstNormal = [...stickers[0].normal];
+  stickers[0].normal = [...stickers[1].normal];
+  stickers[1].normal = firstNormal;
+}
+
+// Twist one corner in place, leaving its colors and position unchanged.
+const twistedCorner = cloneCube(solved);
+rotateStickerNormals(twistedCorner, [1, 1, 1]);
+
+assert.equal(validateCubeStructure(twistedCorner).valid, true);
+
+const twistedCornerResult = validateCubies(twistedCorner);
+
+assert.equal(twistedCornerResult.valid, false);
+assert.ok(
+  twistedCornerResult.errors.includes(
+    "Corner twist sum must be divisible by 3."
+  ),
+  twistedCornerResult.errors.join("\n")
+);
+
+console.log("PASS impossible single-corner twist is rejected");
+
+// Flip one edge in place, leaving its colors and position unchanged.
+const flippedEdge = cloneCube(solved);
+flipEdge(flippedEdge, [1, 1, 0]);
+
+assert.equal(validateCubeStructure(flippedEdge).valid, true);
+
+const flippedEdgeResult = validateCubies(flippedEdge);
+
+assert.equal(flippedEdgeResult.valid, false);
+assert.ok(
+  flippedEdgeResult.errors.includes("Edge flip sum must be even."),
+  flippedEdgeResult.errors.join("\n")
+);
+
+console.log("PASS impossible single-edge flip is rejected");
+
 console.log("\nAll impossible-state tests passed.");
