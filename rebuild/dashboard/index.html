@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0d12">
+  <title>RUBIX | Cube Diagnostic Dashboard</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="topbar">
+      <a class="brand" href="#">
+        <span class="brand-mark">R</span>
+        <span>RUBIX<span class="brand-dot">.</span></span>
+      </a>
+
+      <div class="topbar-right">
+        <span class="system-status">
+          <span class="status-dot"></span>
+          ENGINE ONLINE
+        </span>
+        <span class="version">CORE V0.1</span>
+      </div>
+    </header>
+
+    <main class="dashboard">
+
+      <section class="welcome">
+        <div>
+          <p class="eyebrow">CUBE INTELLIGENCE SYSTEM</p>
+          <h1>Diagnostic <span>Center</span></h1>
+          <p class="subtitle">
+            Analyze your cube structure, pieces, orientation and parity.
+          </p>
+        </div>
+        <div class="date-label">RUBIX / SYSTEM 001</div>
+      </section>
+
+      <section class="health-card">
+        <div class="health-info">
+          <p class="eyebrow">OVERALL CUBE HEALTH</p>
+          <h2 id="overall-status">WAITING FOR ANALYSIS</h2>
+          <p id="overall-summary">
+            Run a diagnostic to inspect your cube.
+          </p>
+        </div>
+
+        <div class="health-indicator" id="health-indicator">
+          <span id="health-symbol">—</span>
+        </div>
+      </section>
+
+      <section class="section-heading">
+        <div>
+          <p class="eyebrow">VALIDATION ENGINE</p>
+          <h2>Diagnostic checks</h2>
+        </div>
+        <span class="section-count">04 MODULES</span>
+      </section>
+
+      <section class="diagnostic-grid">
+
+        <article class="diagnostic-card" id="card-structure">
+          <div class="card-top">
+            <span class="card-number">01</span>
+            <span class="card-status">WAITING</span>
+          </div>
+          <h3>Cube Structure</h3>
+          <p>Sticker count, colors, positions and physical structure.</p>
+        </article>
+
+        <article class="diagnostic-card" id="card-pieces">
+          <div class="card-top">
+            <span class="card-number">02</span>
+            <span class="card-status">WAITING</span>
+          </div>
+          <h3>Piece Recognition</h3>
+          <p>Corner and edge identities and color combinations.</p>
+        </article>
+
+        <article class="diagnostic-card" id="card-orientation">
+          <div class="card-top">
+            <span class="card-number">03</span>
+            <span class="card-status">WAITING</span>
+          </div>
+          <h3>Piece Orientation</h3>
+          <p>Corner twists and edge flips validation.</p>
+        </article>
+
+        <article class="diagnostic-card" id="card-parity">
+          <div class="card-top">
+            <span class="card-number">04</span>
+            <span class="card-status">WAITING</span>
+          </div>
+          <h3>Permutation Parity</h3>
+          <p>Checks whether corner and edge permutation parity match.</p>
+        </article>
+
+      </section>
+
+      <section class="report-panel">
+        <div class="report-heading">
+          <div>
+            <p class="eyebrow">SYSTEM OUTPUT</p>
+            <h2>Diagnostic report</h2>
+          </div>
+          <span id="report-count">NO REPORT</span>
+        </div>
+
+        <div id="report-messages" class="report-messages">
+          <p class="empty-message">
+            No diagnostic data available. Run the cube test to begin.
+          </p>
+        </div>
+      </section>
+
+      <section class="action-panel">
+        <div>
+          <h2>Ready to inspect?</h2>
+          <p>Test the engine using a solved cube configuration.</p>
+        </div>
+
+        <button id="run-diagnostic" type="button">
+          RUN DIAGNOSTIC <span>→</span>
+        </button>
+      </section>
+
+      <footer>
+        <span>RUBIX ULTIMATE EDITION</span>
+        <span>BUILT FOR PRECISION.</span>
+      </footer>
+
+    </main>
+  </div>
+
+  <script src="./js/bundle.js"></script>
+</body>
+</html>
