@@ -539,10 +539,88 @@
     }
   });
 
+  // src/moves.js
+  var require_moves = __commonJS({
+    "src/moves.js"(exports, module) {
+      "use strict";
+      var { turn, FACE_NORMALS } = require_cube();
+      var MOVE_PATTERN = /^([UDFBRL])([2']?)$/;
+      function parseMove(token) {
+        if (typeof token !== "string") {
+          throw new Error("Move must be a string.");
+        }
+        const match = MOVE_PATTERN.exec(token);
+        if (!match || !FACE_NORMALS[match[1]]) {
+          throw new Error(`Invalid move notation: ${token}`);
+        }
+        const face = match[1];
+        const suffix = match[2];
+        return {
+          face,
+          turns: suffix === "'" ? 3 : suffix === "2" ? 2 : 1
+        };
+      }
+      function parseSequence(notation) {
+        if (typeof notation !== "string") {
+          throw new Error("Move sequence must be a string.");
+        }
+        const trimmed = notation.trim();
+        if (!trimmed) return [];
+        return trimmed.split(/\s+/).map(parseMove);
+      }
+      function applyMove(cube, move) {
+        const parsed = typeof move === "string" ? parseMove(move) : move;
+        if (!parsed || !FACE_NORMALS[parsed.face] || ![1, 2, 3].includes(parsed.turns)) {
+          throw new Error("Invalid parsed move.");
+        }
+        return turn(cube, parsed.face, parsed.turns);
+      }
+      function applySequence2(cube, notation) {
+        const moves = Array.isArray(notation) ? notation : parseSequence(notation);
+        return moves.reduce((state, move) => applyMove(state, move), cube);
+      }
+      function invertMove(move) {
+        const parsed = typeof move === "string" ? parseMove(move) : move;
+        if (!parsed || !FACE_NORMALS[parsed.face]) {
+          throw new Error("Invalid move.");
+        }
+        if (parsed.turns === 1) return { face: parsed.face, turns: 3 };
+        if (parsed.turns === 3) return { face: parsed.face, turns: 1 };
+        if (parsed.turns === 2) return { face: parsed.face, turns: 2 };
+        throw new Error("Invalid turn count.");
+      }
+      function invertSequence(notation) {
+        const moves = Array.isArray(notation) ? notation : parseSequence(notation);
+        return moves.slice().reverse().map(invertMove);
+      }
+      function formatMove(move) {
+        if (move.turns === 1) return move.face;
+        if (move.turns === 2) return `${move.face}2`;
+        if (move.turns === 3) return `${move.face}'`;
+        throw new Error("Invalid turn count.");
+      }
+      module.exports = {
+        parseMove,
+        parseSequence,
+        applyMove,
+        applySequence: applySequence2,
+        invertMove,
+        invertSequence,
+        formatMove
+      };
+    }
+  });
+
   // dashboard/js/app.js
   var import_cube = __toESM(require_cube());
   var import_diagnostic_report = __toESM(require_diagnostic_report());
+  var import_moves = __toESM(require_moves());
   var runButton = document.getElementById("run-diagnostic");
+  var scrambleButton = document.getElementById("scramble-cube");
+  var resetButton = document.getElementById("reset-cube");
+  var scrambleNotation = document.getElementById("scramble-notation");
+  var currentCube = (0, import_cube.createSolvedCube)();
+  var currentScramble = "";
   var elements = {
     overallStatus: document.getElementById("overall-status"),
     overallSummary: document.getElementById("overall-summary"),
@@ -592,8 +670,7 @@
     runButton.disabled = true;
     runButton.textContent = "ANALYZING...";
     try {
-      const cube = (0, import_cube.createSolvedCube)();
-      const report = (0, import_diagnostic_report.createDiagnosticReport)(cube);
+      const report = (0, import_diagnostic_report.createDiagnosticReport)(currentCube);
       renderReport(report);
     } catch (error) {
       console.error("Diagnostic failed:", error);
@@ -606,4 +683,40 @@
     }
   }
   runButton.addEventListener("click", runDiagnostic);
+  var FACES = ["U", "D", "F", "B", "R", "L"];
+  var SUFFIXES = ["", "'", "2"];
+  function generateScramble(length = 20) {
+    const moves = [];
+    let previousFace = "";
+    while (moves.length < length) {
+      const face = FACES[Math.floor(Math.random() * FACES.length)];
+      if (face === previousFace) continue;
+      const suffix = SUFFIXES[Math.floor(Math.random() * SUFFIXES.length)];
+      moves.push(`${face}${suffix}`);
+      previousFace = face;
+    }
+    return moves.join(" ");
+  }
+  function scrambleCube() {
+    try {
+      currentScramble = generateScramble();
+      currentCube = (0, import_moves.applySequence)((0, import_cube.createSolvedCube)(), currentScramble);
+      scrambleNotation.textContent = currentScramble;
+      elements.overallStatus.textContent = "SCRAMBLED";
+      elements.overallSummary.textContent = "A legal scramble has been generated. Run diagnostics to validate it.";
+      elements.healthSymbol.textContent = "\u21BB";
+    } catch (error) {
+      console.error("Scramble failed:", error);
+      elements.overallStatus.textContent = "SCRAMBLE ERROR";
+      elements.overallSummary.textContent = error.message;
+    }
+  }
+  scrambleButton.addEventListener("click", scrambleCube);
+  function resetCube() {
+    currentCube = (0, import_cube.createSolvedCube)();
+    currentScramble = "";
+    scrambleNotation.textContent = "NO SCRAMBLE GENERATED";
+    runDiagnostic();
+  }
+  resetButton.addEventListener("click", resetCube);
 })();

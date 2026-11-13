@@ -118,13 +118,27 @@
 
       <section class="action-panel">
         <div>
-          <h2>Ready to inspect?</h2>
-          <p>Test the engine using a solved cube configuration.</p>
+          <h2>Cube Testing Lab</h2>
+          <p>Scramble, validate and reset your cube configuration.</p>
         </div>
 
-        <button id="run-diagnostic" type="button">
-          RUN DIAGNOSTIC <span>→</span>
-        </button>
+        <div class="cube-controls">
+          <button id="scramble-cube" type="button">
+            SCRAMBLE CUBE
+          </button>
+
+          <button id="run-diagnostic" type="button">
+            RUN DIAGNOSTIC <span>→</span>
+          </button>
+
+          <button id="reset-cube" type="button">
+            RESET CUBE
+          </button>
+        </div>
+
+        <p id="scramble-notation" class="scramble-notation">
+          NO SCRAMBLE GENERATED
+        </p>
       </section>
 
       <footer>

@@ -2,8 +2,15 @@
 
 import { createSolvedCube } from "../../src/cube.js";
 import { createDiagnosticReport } from "../../src/diagnostic-report.js";
+import { applySequence } from "../../src/moves.js";
 
 const runButton = document.getElementById("run-diagnostic");
+const scrambleButton = document.getElementById("scramble-cube");
+const resetButton = document.getElementById("reset-cube");
+const scrambleNotation = document.getElementById("scramble-notation");
+
+let currentCube = createSolvedCube();
+let currentScramble = "";
 
 const elements = {
   overallStatus: document.getElementById("overall-status"),
@@ -69,8 +76,7 @@ function runDiagnostic() {
   runButton.textContent = "ANALYZING...";
 
   try {
-    const cube = createSolvedCube();
-    const report = createDiagnosticReport(cube);
+    const report = createDiagnosticReport(currentCube);
     renderReport(report);
   } catch (error) {
     console.error("Diagnostic failed:", error);
@@ -85,3 +91,53 @@ function runDiagnostic() {
 }
 
 runButton.addEventListener("click", runDiagnostic);
+
+const FACES = ["U", "D", "F", "B", "R", "L"];
+const SUFFIXES = ["", "'", "2"];
+
+function generateScramble(length = 20) {
+  const moves = [];
+  let previousFace = "";
+
+  while (moves.length < length) {
+    const face = FACES[Math.floor(Math.random() * FACES.length)];
+
+    if (face === previousFace) continue;
+
+    const suffix = SUFFIXES[Math.floor(Math.random() * SUFFIXES.length)];
+    moves.push(`${face}${suffix}`);
+    previousFace = face;
+  }
+
+  return moves.join(" ");
+}
+
+function scrambleCube() {
+  try {
+    currentScramble = generateScramble();
+    currentCube = applySequence(createSolvedCube(), currentScramble);
+
+    scrambleNotation.textContent = currentScramble;
+    elements.overallStatus.textContent = "SCRAMBLED";
+    elements.overallSummary.textContent =
+      "A legal scramble has been generated. Run diagnostics to validate it.";
+    elements.healthSymbol.textContent = "↻";
+  } catch (error) {
+    console.error("Scramble failed:", error);
+    elements.overallStatus.textContent = "SCRAMBLE ERROR";
+    elements.overallSummary.textContent = error.message;
+  }
+}
+
+scrambleButton.addEventListener("click", scrambleCube);
+
+function resetCube() {
+  currentCube = createSolvedCube();
+  currentScramble = "";
+
+  scrambleNotation.textContent = "NO SCRAMBLE GENERATED";
+
+  runDiagnostic();
+}
+
+resetButton.addEventListener("click", resetCube);

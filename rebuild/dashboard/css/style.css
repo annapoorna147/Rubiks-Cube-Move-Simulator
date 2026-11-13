@@ -452,3 +452,78 @@ footer {
     font-size: 8px;
   }
 }
+
+/* Cube Testing Lab */
+.action-panel {
+  flex-wrap: wrap;
+}
+
+.cube-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#scramble-cube,
+#reset-cube {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 15px 18px;
+  background: #1b2639;
+  color: #e8edff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+#scramble-cube:hover {
+  background: #263c65;
+  border-color: var(--blue);
+  transform: translateY(-2px);
+}
+
+#reset-cube:hover {
+  background: #452b35;
+  border-color: var(--red);
+  transform: translateY(-2px);
+}
+
+#scramble-cube:active,
+#reset-cube:active,
+#run-diagnostic:active {
+  transform: translateY(0);
+}
+
+.scramble-notation {
+  flex: 1 1 100%;
+  margin: 4px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #0c121e;
+  color: var(--blue) !important;
+  font-family: monospace;
+  font-size: 13px !important;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .cube-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cube-controls button {
+    width: 100%;
+  }
+
+  .scramble-notation {
+    width: 100%;
+  }
+}
