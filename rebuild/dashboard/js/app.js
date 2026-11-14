@@ -3,6 +3,7 @@
 import { createSolvedCube } from "../../src/cube.js";
 import { createDiagnosticReport } from "../../src/diagnostic-report.js";
 import { applySequence } from "../../src/moves.js";
+import { Cube3D } from "./visualizer/cube3d.js";
 
 const runButton = document.getElementById("run-diagnostic");
 const scrambleButton = document.getElementById("scramble-cube");
@@ -117,6 +118,12 @@ function scrambleCube() {
     currentScramble = generateScramble();
     currentCube = applySequence(createSolvedCube(), currentScramble);
 
+    if (cube3D) {
+      cube3D.playSequence(currentScramble).catch(error => {
+        console.error("3D scramble playback failed:", error);
+      });
+    }
+
     scrambleNotation.textContent = currentScramble;
     elements.overallStatus.textContent = "SCRAMBLED";
     elements.overallSummary.textContent =
@@ -135,9 +142,56 @@ function resetCube() {
   currentCube = createSolvedCube();
   currentScramble = "";
 
+  if (cube3D) {
+    cube3D.resetToSolved().catch(error => {
+      console.error("3D reset failed:", error);
+    });
+  }
+
   scrambleNotation.textContent = "NO SCRAMBLE GENERATED";
 
   runDiagnostic();
 }
 
 resetButton.addEventListener("click", resetCube);
+
+// Initialize the 3D cube visualizer
+const visualizerContainer = document.getElementById("cube-3d-viewer");
+
+let cube3D = null;
+
+if (visualizerContainer) {
+  try {
+    cube3D = new Cube3D(visualizerContainer);
+
+    const loadingMessage = visualizerContainer.querySelector(
+      ".visualizer-loading"
+    );
+
+    loadingMessage?.remove();
+
+    console.log("RUBIX 3D visualizer initialized successfully.");
+
+    document.querySelectorAll("[data-move]").forEach(button => {
+      button.addEventListener("click", async () => {
+        const move = button.dataset.move;
+        const face = move[0];
+        const suffix = move.slice(1);
+
+        const turns = suffix === "'" ? 3 : suffix === "2" ? 2 : 1;
+
+        try {
+          await cube3D.turnFace(face, turns);
+          console.log(`3D move completed: ${move}`);
+        } catch (error) {
+          console.error(`3D move failed: ${move}`, error);
+        }
+      });
+    });
+  } catch (error) {
+    console.error("3D visualizer initialization failed:", error);
+
+    visualizerContainer.innerHTML =
+      '<div class="visualizer-loading">3D ENGINE UNAVAILABLE</div>';
+  }
+}

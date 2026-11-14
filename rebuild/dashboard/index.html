@@ -38,7 +38,41 @@
         <div class="date-label">RUBIX / SYSTEM 001</div>
       </section>
 
-      <section class="health-card">
+      <section class="visualizer-panel">
+  <div class="visualizer-heading">
+    <div>
+      <p class="eyebrow">INTERACTIVE 3D ENGINE</p>
+      <h2>Cube Visualizer</h2>
+      <p>Explore your Rubik's Cube in three dimensions.</p>
+    </div>
+    <span class="visualizer-badge">3D VIEW</span>
+  </div>
+
+  <div id="cube-3d-viewer" class="cube-3d-viewer">
+    <div class="visualizer-loading">INITIALIZING 3D ENGINE...</div>
+  </div>
+
+  <div class="face-test-controls">
+    <button type="button" data-move="U">U</button>
+    <button type="button" data-move="U'">U'</button>
+    <button type="button" data-move="D">D</button>
+    <button type="button" data-move="D'">D'</button>
+    <button type="button" data-move="L">L</button>
+    <button type="button" data-move="L'">L'</button>
+    <button type="button" data-move="R">R</button>
+    <button type="button" data-move="R'">R'</button>
+    <button type="button" data-move="F">F</button>
+    <button type="button" data-move="F'">F'</button>
+    <button type="button" data-move="B">B</button>
+    <button type="button" data-move="B'">B'</button>
+  </div>
+
+  <p class="visualizer-caption">
+    Drag to rotate. Use the controls to test animated face turns.
+  </p>
+</section>
+
+<section class="health-card">
         <div class="health-info">
           <p class="eyebrow">OVERALL CUBE HEALTH</p>
           <h2 id="overall-status">WAITING FOR ANALYSIS</h2>
