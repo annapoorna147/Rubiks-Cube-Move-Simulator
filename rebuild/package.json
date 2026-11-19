@@ -1,10 +1,11 @@
+
 {
   "name": "rubix-core-rebuild",
   "version": "0.1.0",
   "private": true,
   "description": "Isolated RUBIX cube engine rebuild",
   "scripts": {
-    "test": "node tests/run-tests.js && node tests/validation.test.js && node tests/independent-orientation.test.js && node tests/cube-validation.test.js && node tests/physical-move-conventions.test.js && node tests/cubies.test.js && node tests/randomized-cubies.test.js && node tests/impossible-states.test.js && node tests/diagnostics.test.js && node tests/diagnostic-report.test.js"
+    "test": "node tests/run-tests.js && node tests/validation.test.js && node tests/independent-orientation.test.js && node tests/cube-validation.test.js && node tests/physical-move-conventions.test.js && node tests/cubies.test.js && node tests/randomized-cubies.test.js && node tests/impossible-states.test.js && node tests/diagnostics.test.js && node tests/diagnostic-report.test.js && node tests/camera-pipeline.test.js"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"

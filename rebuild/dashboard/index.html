@@ -1,188 +1,319 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b0d12">
-  <title>RUBIX | Cube Diagnostic Dashboard</title>
-  <link rel="stylesheet" href="./css/style.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; color: #0000e9; -webkit-text-stroke: #0000e9; min-height: 14.0px}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; color: #0000e9; -webkit-text-stroke: #0000e9}
+    span.s1 {text-decoration: underline ; font-kerning: none}
+  </style>
 </head>
 <body>
-  <div class="app-shell">
-
-    <header class="topbar">
-      <a class="brand" href="#">
-        <span class="brand-mark">R</span>
-        <span>RUBIX<span class="brand-dot">.</span></span>
-      </a>
-
-      <div class="topbar-right">
-        <span class="system-status">
-          <span class="status-dot"></span>
-          ENGINE ONLINE
-        </span>
-        <span class="version">CORE V0.1</span>
-      </div>
-    </header>
-
-    <main class="dashboard">
-
-      <section class="welcome">
-        <div>
-          <p class="eyebrow">CUBE INTELLIGENCE SYSTEM</p>
-          <h1>Diagnostic <span>Center</span></h1>
-          <p class="subtitle">
-            Analyze your cube structure, pieces, orientation and parity.
-          </p>
-        </div>
-        <div class="date-label">RUBIX / SYSTEM 001</div>
-      </section>
-
-      <section class="visualizer-panel">
-  <div class="visualizer-heading">
-    <div>
-      <p class="eyebrow">INTERACTIVE 3D ENGINE</p>
-      <h2>Cube Visualizer</h2>
-      <p>Explore your Rubik's Cube in three dimensions.</p>
-    </div>
-    <span class="visualizer-badge">3D VIEW</span>
-  </div>
-
-  <div id="cube-3d-viewer" class="cube-3d-viewer">
-    <div class="visualizer-loading">INITIALIZING 3D ENGINE...</div>
-  </div>
-
-  <div class="face-test-controls">
-    <button type="button" data-move="U">U</button>
-    <button type="button" data-move="U'">U'</button>
-    <button type="button" data-move="D">D</button>
-    <button type="button" data-move="D'">D'</button>
-    <button type="button" data-move="L">L</button>
-    <button type="button" data-move="L'">L'</button>
-    <button type="button" data-move="R">R</button>
-    <button type="button" data-move="R'">R'</button>
-    <button type="button" data-move="F">F</button>
-    <button type="button" data-move="F'">F'</button>
-    <button type="button" data-move="B">B</button>
-    <button type="button" data-move="B'">B'</button>
-  </div>
-
-  <p class="visualizer-caption">
-    Drag to rotate. Use the controls to test animated face turns.
-  </p>
-</section>
-
-<section class="health-card">
-        <div class="health-info">
-          <p class="eyebrow">OVERALL CUBE HEALTH</p>
-          <h2 id="overall-status">WAITING FOR ANALYSIS</h2>
-          <p id="overall-summary">
-            Run a diagnostic to inspect your cube.
-          </p>
-        </div>
-
-        <div class="health-indicator" id="health-indicator">
-          <span id="health-symbol">—</span>
-        </div>
-      </section>
-
-      <section class="section-heading">
-        <div>
-          <p class="eyebrow">VALIDATION ENGINE</p>
-          <h2>Diagnostic checks</h2>
-        </div>
-        <span class="section-count">04 MODULES</span>
-      </section>
-
-      <section class="diagnostic-grid">
-
-        <article class="diagnostic-card" id="card-structure">
-          <div class="card-top">
-            <span class="card-number">01</span>
-            <span class="card-status">WAITING</span>
-          </div>
-          <h3>Cube Structure</h3>
-          <p>Sticker count, colors, positions and physical structure.</p>
-        </article>
-
-        <article class="diagnostic-card" id="card-pieces">
-          <div class="card-top">
-            <span class="card-number">02</span>
-            <span class="card-status">WAITING</span>
-          </div>
-          <h3>Piece Recognition</h3>
-          <p>Corner and edge identities and color combinations.</p>
-        </article>
-
-        <article class="diagnostic-card" id="card-orientation">
-          <div class="card-top">
-            <span class="card-number">03</span>
-            <span class="card-status">WAITING</span>
-          </div>
-          <h3>Piece Orientation</h3>
-          <p>Corner twists and edge flips validation.</p>
-        </article>
-
-        <article class="diagnostic-card" id="card-parity">
-          <div class="card-top">
-            <span class="card-number">04</span>
-            <span class="card-status">WAITING</span>
-          </div>
-          <h3>Permutation Parity</h3>
-          <p>Checks whether corner and edge permutation parity match.</p>
-        </article>
-
-      </section>
-
-      <section class="report-panel">
-        <div class="report-heading">
-          <div>
-            <p class="eyebrow">SYSTEM OUTPUT</p>
-            <h2>Diagnostic report</h2>
-          </div>
-          <span id="report-count">NO REPORT</span>
-        </div>
-
-        <div id="report-messages" class="report-messages">
-          <p class="empty-message">
-            No diagnostic data available. Run the cube test to begin.
-          </p>
-        </div>
-      </section>
-
-      <section class="action-panel">
-        <div>
-          <h2>Cube Testing Lab</h2>
-          <p>Scramble, validate and reset your cube configuration.</p>
-        </div>
-
-        <div class="cube-controls">
-          <button id="scramble-cube" type="button">
-            SCRAMBLE CUBE
-          </button>
-
-          <button id="run-diagnostic" type="button">
-            RUN DIAGNOSTIC <span>→</span>
-          </button>
-
-          <button id="reset-cube" type="button">
-            RESET CUBE
-          </button>
-        </div>
-
-        <p id="scramble-notation" class="scramble-notation">
-          NO SCRAMBLE GENERATED
-        </p>
-      </section>
-
-      <footer>
-        <span>RUBIX ULTIMATE EDITION</span>
-        <span>BUILT FOR PRECISION.</span>
-      </footer>
-
-    </main>
-  </div>
-
-  <script src="./js/bundle.js"></script>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
+<p class="p2"><span class="s1">&lt;html lang="en"&gt;</span></p>
+<p class="p2"><span class="s1">&lt;head&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="theme-color" content="#0b0d12"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;title&gt;RUBIX | Ultimate Cube Intelligence&lt;/title&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="stylesheet" href="./css/style.css"&gt;</span></p>
+<p class="p2"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1">&lt;body&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="app-shell"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- HEADER --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>&lt;header class="topbar"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;a class="brand" href="#"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span class="brand-mark"&gt;R&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span&gt;RUBIX&lt;span class="brand-dot"&gt;.&lt;/span&gt;&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/a&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="topbar-right"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span class="system-status"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;span class="status-dot"&gt;&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>ENGINE ONLINE</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span class="version"&gt;CORE V0.1&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/header&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>&lt;main class="dashboard"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- WELCOME --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="welcome"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p class="eyebrow"&gt;CUBE INTELLIGENCE SYSTEM&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h1&gt;Diagnostic &lt;span&gt;Center&lt;/span&gt;&lt;/h1&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p class="subtitle"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>Analyze your cube structure, pieces, orientation and parity.</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="date-label"&gt;RUBIX / SYSTEM 001&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- 3D VISUALIZER --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="visualizer-panel"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="visualizer-heading"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;p class="eyebrow"&gt;INTERACTIVE 3D ENGINE&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;h2&gt;Cube Visualizer&lt;/h2&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;p&gt;Explore your Rubik's Cube in three dimensions.&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;span class="visualizer-badge"&gt;3D VIEW&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div id="cube-3d-viewer" class="cube-3d-viewer"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="visualizer-loading"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>INITIALIZING 3D ENGINE...</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="face-test-controls"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="U"&gt;U&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="U'"&gt;U'&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="D"&gt;D&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="D'"&gt;D'&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="L"&gt;L&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="L'"&gt;L'&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="R"&gt;R&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="R'"&gt;R'&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="F"&gt;F&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="F'"&gt;F'&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="B"&gt;B&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button type="button" data-move="B'"&gt;B'&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="visualizer-caption"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>Drag to rotate. Use the controls to test animated face turns.</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- PHYSICAL CUBE SCANNER --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="scanner-panel"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="scanner-heading"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;p class="eyebrow"&gt;PHYSICAL CUBE RECOGNITION&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;h2&gt;Cube Scanner&lt;/h2&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;p&gt;Scan all six faces of your physical Rubik's Cube.&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;span class="visualizer-badge"&gt;CAMERA INPUT&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="scanner-layout"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="camera-container"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;video</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>id="camera-preview"</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>autoplay</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>playsinline</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>muted&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/video&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="camera-placeholder"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;span&gt;CAMERA STANDBY&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;small&gt;Your camera preview will appear here.&lt;/small&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="scanner-controls"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;label for="face-selector"&gt;SELECT CUBE FACE&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;select id="face-selector"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;option value="U"&gt;U — Up&lt;/option&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;option value="D"&gt;D — Down&lt;/option&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;option value="F"&gt;F — Front&lt;/option&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;option value="B"&gt;B — Back&lt;/option&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;option value="R"&gt;R — Right&lt;/option&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>&lt;option value="L"&gt;L — Left&lt;/option&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/select&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;button id="start-camera" type="button"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>START CAMERA</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;button id="capture-face" type="button" disabled&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>CAPTURE FACE</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;p id="scanner-status" aria-live="polite"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">              </span>Camera not started.</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="scanner-progress"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="scanner-progress-heading"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span&gt;SCAN PROGRESS&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span id="face-progress"&gt;0 / 6 FACES CAPTURED&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="face-progress-grid"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="face-progress-item" data-face="U"&gt;U&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="face-progress-item" data-face="D"&gt;D&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="face-progress-item" data-face="F"&gt;F&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="face-progress-item" data-face="B"&gt;B&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="face-progress-item" data-face="R"&gt;R&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="face-progress-item" data-face="L"&gt;L&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- OVERALL HEALTH --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="health-card"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="health-info"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p class="eyebrow"&gt;OVERALL CUBE HEALTH&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h2 id="overall-status"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>WAITING FOR ANALYSIS</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p id="overall-summary"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>Run a diagnostic to inspect your cube.</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="health-indicator" id="health-indicator"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;span id="health-symbol"&gt;—&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- DIAGNOSTIC HEADING --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="section-heading"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p class="eyebrow"&gt;VALIDATION ENGINE&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h2&gt;Diagnostic checks&lt;/h2&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span class="section-count"&gt;04 MODULES&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- DIAGNOSTIC MODULES --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="diagnostic-grid"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;article class="diagnostic-card" id="card-structure"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="card-top"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-number"&gt;01&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-status"&gt;WAITING&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h3&gt;Cube Structure&lt;/h3&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p&gt;Sticker count, colors, positions and physical structure.&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/article&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;article class="diagnostic-card" id="card-pieces"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="card-top"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-number"&gt;02&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-status"&gt;WAITING&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h3&gt;Piece Recognition&lt;/h3&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p&gt;Corner and edge identities and color combinations.&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/article&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;article class="diagnostic-card" id="card-orientation"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="card-top"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-number"&gt;03&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-status"&gt;WAITING&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h3&gt;Piece Orientation&lt;/h3&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p&gt;Corner twists and edge flips validation.&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/article&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;article class="diagnostic-card" id="card-parity"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="card-top"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-number"&gt;04&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="card-status"&gt;WAITING&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h3&gt;Permutation Parity&lt;/h3&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p&gt;Checks whether corner and edge permutation parity match.&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/article&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- DIAGNOSTIC REPORT --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="report-panel"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="report-heading"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;p class="eyebrow"&gt;SYSTEM OUTPUT&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>&lt;h2&gt;Diagnostic report&lt;/h2&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;span id="report-count"&gt;NO REPORT&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div id="report-messages" class="report-messages"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p class="empty-message"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>No diagnostic data available. Run the cube test to begin.</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- CUBE TESTING LAB --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;section class="action-panel"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;h2&gt;Cube Testing Lab&lt;/h2&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;p&gt;Scramble, validate and reset your cube configuration.&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="cube-controls"&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button id="scramble-cube" type="button"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>SCRAMBLE CUBE</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button id="run-diagnostic" type="button"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>RUN DIAGNOSTIC &lt;span&gt;→&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button id="reset-cube" type="button"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span>RESET CUBE</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p id="scramble-notation" class="scramble-notation"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>NO SCRAMBLE GENERATED</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/section&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- FOOTER --&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;footer&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span&gt;RUBIX ULTIMATE EDITION&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span&gt;BUILT FOR PRECISION.&lt;/span&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/footer&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/main&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="./js/bundle.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p2"><span class="s1">&lt;/html&gt;</span></p>
 </body>
 </html>
