@@ -611,10 +611,262 @@
     }
   });
 
+  // src/camera/color-detector.js
+  var require_color_detector = __commonJS({
+    "src/camera/color-detector.js"(exports, module) {
+      "use strict";
+      function rgbToHsv(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        let h = 0;
+        const s = max === 0 ? 0 : delta / max;
+        const v = max;
+        if (delta !== 0) {
+          if (max === r) {
+            h = 60 * ((g - b) / delta % 6);
+          } else if (max === g) {
+            h = 60 * ((b - r) / delta + 2);
+          } else {
+            h = 60 * ((r - g) / delta + 4);
+          }
+        }
+        if (h < 0) h += 360;
+        return {
+          h,
+          s: s * 100,
+          v: v * 100
+        };
+      }
+      function detectColor(r, g, b) {
+        if (![r, g, b].every(
+          (value) => Number.isFinite(value) && value >= 0 && value <= 255
+        )) {
+          throw new Error("RGB values must be between 0 and 255.");
+        }
+        const { h, s, v } = rgbToHsv(r, g, b);
+        if (s < 20 && v > 65) return "white";
+        if (v < 15) return "unknown";
+        if (h >= 40 && h < 75) return "yellow";
+        if (h >= 15 && h < 40) return "orange";
+        if (h >= 345 || h < 15) return "red";
+        if (h >= 75 && h < 170) return "green";
+        if (h >= 170 && h < 270) return "blue";
+        return "unknown";
+      }
+      module.exports = {
+        rgbToHsv,
+        detectColor
+      };
+    }
+  });
+
+  // src/camera/face-scanner.js
+  var require_face_scanner = __commonJS({
+    "src/camera/face-scanner.js"(exports, module) {
+      "use strict";
+      var { detectColor } = require_color_detector();
+      function scanFace(imageData) {
+        if (!imageData || !Number.isInteger(imageData.width) || !Number.isInteger(imageData.height) || imageData.width < 3 || imageData.height < 3 || !imageData.data) {
+          throw new Error("Invalid image data.");
+        }
+        const { width, height, data } = imageData;
+        if (data.length !== width * height * 4) {
+          throw new Error("Pixel data length does not match image dimensions.");
+        }
+        const face = [];
+        for (let row = 0; row < 3; row++) {
+          const faceRow = [];
+          for (let col = 0; col < 3; col++) {
+            const x = Math.min(
+              width - 1,
+              Math.floor((col + 0.5) * width / 3)
+            );
+            const y = Math.min(
+              height - 1,
+              Math.floor((row + 0.5) * height / 3)
+            );
+            const index = (y * width + x) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            faceRow.push(detectColor(r, g, b));
+          }
+          face.push(faceRow);
+        }
+        return face;
+      }
+      module.exports = {
+        scanFace
+      };
+    }
+  });
+
+  // src/camera/cube-reconstructor.js
+  var require_cube_reconstructor = __commonJS({
+    "src/camera/cube-reconstructor.js"(exports, module) {
+      "use strict";
+      var {
+        FACE_NORMALS: FACE_NORMALS2,
+        validateCubeStructure
+      } = require_cube();
+      var { diagnoseCube } = require_cubies();
+      var FACE_KEYS = ["U", "D", "F", "B", "R", "L"];
+      function getStickerPosition(face, row, col) {
+        switch (face) {
+          case "U":
+            return [col - 1, 1, row - 1];
+          case "D":
+            return [col - 1, -1, 1 - row];
+          case "F":
+            return [col - 1, 1 - row, 1];
+          case "B":
+            return [1 - col, 1 - row, -1];
+          case "R":
+            return [1, 1 - row, 1 - col];
+          case "L":
+            return [-1, 1 - row, col - 1];
+          default:
+            throw new Error(`Invalid face: ${face}`);
+        }
+      }
+      function validateFaceGrids(faces) {
+        const errors = [];
+        if (!faces || typeof faces !== "object" || Array.isArray(faces)) {
+          return {
+            valid: false,
+            errors: ["Faces must be an object containing six face grids."]
+          };
+        }
+        for (const face of FACE_KEYS) {
+          const grid = faces[face];
+          if (!Array.isArray(grid) || grid.length !== 3) {
+            errors.push(`${face} must contain exactly 3 rows.`);
+            continue;
+          }
+          for (let row = 0; row < 3; row++) {
+            if (!Array.isArray(grid[row]) || grid[row].length !== 3) {
+              errors.push(`${face} row ${row + 1} must contain exactly 3 colors.`);
+              continue;
+            }
+            for (let col = 0; col < 3; col++) {
+              if (typeof grid[row][col] !== "string" || grid[row][col].length === 0) {
+                errors.push(
+                  `${face} sticker at row ${row + 1}, column ${col + 1} is invalid.`
+                );
+              }
+            }
+          }
+        }
+        return {
+          valid: errors.length === 0,
+          errors
+        };
+      }
+      function reconstructCube(faces) {
+        const faceValidation = validateFaceGrids(faces);
+        if (!faceValidation.valid) {
+          return {
+            valid: false,
+            cube: null,
+            structure: null,
+            diagnosis: null,
+            errors: faceValidation.errors
+          };
+        }
+        const stickers = [];
+        for (const face of FACE_KEYS) {
+          for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+              stickers.push({
+                position: getStickerPosition(face, row, col),
+                normal: [...FACE_NORMALS2[face]],
+                color: faces[face][row][col]
+              });
+            }
+          }
+        }
+        const cube = { stickers };
+        const structure = validateCubeStructure(cube);
+        if (!structure.valid) {
+          return {
+            valid: false,
+            cube,
+            structure,
+            diagnosis: null,
+            errors: [...structure.errors]
+          };
+        }
+        const diagnosis = diagnoseCube(cube);
+        return {
+          valid: diagnosis.valid,
+          cube,
+          structure,
+          diagnosis,
+          errors: [...diagnosis.errors]
+        };
+      }
+      module.exports = {
+        reconstructCube,
+        validateFaceGrids,
+        getStickerPosition
+      };
+    }
+  });
+
+  // src/camera/camera-pipeline.js
+  var require_camera_pipeline = __commonJS({
+    "src/camera/camera-pipeline.js"(exports, module) {
+      "use strict";
+      var { scanFace } = require_face_scanner();
+      var { reconstructCube } = require_cube_reconstructor();
+      var REQUIRED_FACES = ["U", "D", "F", "B", "R", "L"];
+      function scanCubeFace2(imageData, face) {
+        if (!REQUIRED_FACES.includes(face)) {
+          throw new Error(`Invalid face: ${face}`);
+        }
+        const colors = scanFace(imageData);
+        return {
+          face,
+          colors
+        };
+      }
+      function buildCubeFromScans2(scannedFaces2) {
+        if (!scannedFaces2 || typeof scannedFaces2 !== "object") {
+          return {
+            valid: false,
+            cube: null,
+            errors: ["Scanned faces must be provided."]
+          };
+        }
+        const faces = {};
+        for (const face of REQUIRED_FACES) {
+          if (!scannedFaces2[face]) {
+            return {
+              valid: false,
+              cube: null,
+              errors: [`Please scan the ${face} face.`]
+            };
+          }
+          faces[face] = scannedFaces2[face];
+        }
+        return reconstructCube(faces);
+      }
+      module.exports = {
+        scanCubeFace: scanCubeFace2,
+        buildCubeFromScans: buildCubeFromScans2
+      };
+    }
+  });
+
   // dashboard/js/app.js
   var import_cube = __toESM(require_cube());
   var import_diagnostic_report = __toESM(require_diagnostic_report());
   var import_moves = __toESM(require_moves());
+  var import_camera_pipeline = __toESM(require_camera_pipeline());
 
   // node_modules/three/build/three.core.js
   var REVISION = "187";
@@ -29499,8 +29751,21 @@ void main() {
   var scrambleButton = document.getElementById("scramble-cube");
   var resetButton = document.getElementById("reset-cube");
   var scrambleNotation = document.getElementById("scramble-notation");
+  var video = document.getElementById("camera-preview");
+  var cameraPlaceholder = document.getElementById("camera-placeholder");
+  var faceSelector = document.getElementById("face-selector");
+  var startCameraButton = document.getElementById("start-camera");
+  var captureFaceButton = document.getElementById("capture-face");
+  var scannerStatus = document.getElementById("scanner-status");
+  var faceProgress = document.getElementById("face-progress");
+  var progressItems = document.querySelectorAll(".face-progress-item");
+  var FACES = ["U", "D", "F", "B", "R", "L"];
+  var SUFFIXES = ["", "'", "2"];
   var currentCube = (0, import_cube.createSolvedCube)();
   var currentScramble = "";
+  var cube3D = null;
+  var cameraStream = null;
+  var scannedFaces = /* @__PURE__ */ Object.create(null);
   var elements = {
     overallStatus: document.getElementById("overall-status"),
     overallSummary: document.getElementById("overall-summary"),
@@ -29521,7 +29786,9 @@ void main() {
     const statusElement = card.querySelector(".card-status");
     card.classList.remove("pass", "fail", "not-checked");
     card.classList.add(section.status.toLowerCase().replace("_", "-"));
-    statusElement.textContent = section.status.replace("_", " ");
+    if (statusElement) {
+      statusElement.textContent = section.status.replace("_", " ");
+    }
   }
   function renderReport(report) {
     elements.healthCard.classList.remove("valid", "invalid");
@@ -29563,8 +29830,6 @@ void main() {
     }
   }
   runButton.addEventListener("click", runDiagnostic);
-  var FACES = ["U", "D", "F", "B", "R", "L"];
-  var SUFFIXES = ["", "'", "2"];
   function generateScramble(length = 20) {
     const moves = [];
     let previousFace = "";
@@ -29609,8 +29874,181 @@ void main() {
     runDiagnostic();
   }
   resetButton.addEventListener("click", resetCube);
+  function setScannerStatus(message) {
+    if (scannerStatus) {
+      scannerStatus.textContent = message;
+    }
+  }
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      cameraStream = null;
+    }
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+      video.style.display = "none";
+    }
+    if (cameraPlaceholder) {
+      cameraPlaceholder.hidden = false;
+    }
+    if (captureFaceButton) {
+      captureFaceButton.disabled = true;
+    }
+    if (startCameraButton) {
+      startCameraButton.textContent = "START CAMERA";
+    }
+    setScannerStatus("Camera stopped.");
+  }
+  async function startCamera() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScannerStatus(
+        "Camera unavailable. Use HTTPS or localhost and a supported browser."
+      );
+      return;
+    }
+    try {
+      setScannerStatus("Requesting camera permission...");
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      video.srcObject = cameraStream;
+      video.muted = true;
+      video.playsInline = true;
+      await video.play();
+      video.style.display = "block";
+      if (cameraPlaceholder) {
+        cameraPlaceholder.hidden = true;
+      }
+      captureFaceButton.disabled = false;
+      startCameraButton.textContent = "STOP CAMERA";
+      setScannerStatus(
+        "Camera ready. Centre one cube face and select its face label."
+      );
+    } catch (error2) {
+      console.error("Camera initialization failed:", error2);
+      stopCamera();
+      if (error2.name === "NotAllowedError") {
+        setScannerStatus(
+          "Camera permission denied. Allow camera access in your browser."
+        );
+      } else if (error2.name === "NotFoundError") {
+        setScannerStatus("No camera was detected on this device.");
+      } else {
+        setScannerStatus(`Camera error: ${error2.message}`);
+      }
+    }
+  }
+  if (startCameraButton) {
+    startCameraButton.addEventListener("click", () => {
+      if (cameraStream) {
+        stopCamera();
+      } else {
+        startCamera();
+      }
+    });
+  }
+  function updateFaceProgress() {
+    const count = Object.keys(scannedFaces).length;
+    faceProgress.textContent = `${count} / 6 FACES CAPTURED`;
+    progressItems.forEach((item) => {
+      const face = item.dataset.face;
+      item.classList.toggle("captured", Boolean(scannedFaces[face]));
+    });
+  }
+  function captureFace() {
+    if (!cameraStream || !video.videoWidth || !video.videoHeight) {
+      setScannerStatus("Start the camera before capturing a face.");
+      return;
+    }
+    const selectedFace = faceSelector.value;
+    if (!FACES.includes(selectedFace)) {
+      setScannerStatus("Please select a valid cube face.");
+      return;
+    }
+    try {
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      const cropSize = Math.min(videoWidth, videoHeight);
+      const sourceX = (videoWidth - cropSize) / 2;
+      const sourceY = (videoHeight - cropSize) / 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = 300;
+      canvas.height = 300;
+      const context = canvas.getContext("2d", {
+        willReadFrequently: true
+      });
+      if (!context) {
+        throw new Error("Unable to create image processing canvas.");
+      }
+      context.drawImage(
+        video,
+        sourceX,
+        sourceY,
+        cropSize,
+        cropSize,
+        0,
+        0,
+        300,
+        300
+      );
+      const imageData = context.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+      const scanResult = (0, import_camera_pipeline.scanCubeFace)(imageData, selectedFace);
+      scannedFaces[selectedFace] = scanResult.colors;
+      updateFaceProgress();
+      setScannerStatus(
+        `${selectedFace} face captured successfully.`
+      );
+      console.log(`RUBIX face scan completed: ${selectedFace}`, scanResult);
+      if (Object.keys(scannedFaces).length === 6) {
+        reconstructScannedCube();
+      }
+    } catch (error2) {
+      console.error("Face capture failed:", error2);
+      setScannerStatus(`Capture failed: ${error2.message}`);
+    }
+  }
+  if (captureFaceButton) {
+    captureFaceButton.addEventListener("click", captureFace);
+  }
+  function reconstructScannedCube() {
+    setScannerStatus("All six faces captured. Reconstructing cube...");
+    try {
+      const result = (0, import_camera_pipeline.buildCubeFromScans)(scannedFaces);
+      if (!result.valid) {
+        setScannerStatus(
+          `Cube reconstruction failed: ${result.errors.join(" ")}`
+        );
+        console.error("Cube reconstruction errors:", result.errors);
+        return;
+      }
+      currentCube = result.cube;
+      currentScramble = "";
+      scrambleNotation.textContent = "CUBE LOADED FROM CAMERA SCAN";
+      runDiagnostic();
+      setScannerStatus(
+        "Cube reconstructed successfully! Diagnostic analysis completed."
+      );
+      console.log("RUBIX cube reconstructed successfully.", result);
+    } catch (error2) {
+      console.error("Cube reconstruction failed:", error2);
+      setScannerStatus(
+        `Reconstruction error: ${error2.message}`
+      );
+    }
+  }
+  window.addEventListener("pagehide", stopCamera);
   var visualizerContainer = document.getElementById("cube-3d-viewer");
-  var cube3D = null;
   if (visualizerContainer) {
     try {
       cube3D = new Cube3D(visualizerContainer);
@@ -29638,6 +30076,7 @@ void main() {
       visualizerContainer.innerHTML = '<div class="visualizer-loading">3D ENGINE UNAVAILABLE</div>';
     }
   }
+  console.log("RUBIX camera integration initialized.");
 })();
 /*! Bundled license information:
 
