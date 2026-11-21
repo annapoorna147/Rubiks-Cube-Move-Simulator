@@ -1,4 +1,3 @@
-
 "use strict";
 
 // Convert RGB values (0–255) into HSV.
@@ -44,25 +43,29 @@ function detectColor(r, g, b) {
 
   const { h, s, v } = rgbToHsv(r, g, b);
 
-  // White
-  if (s < 20 && v > 65) return "white";
-
-  // Very dark pixels
+  // Very dark pixels.
   if (v < 15) return "unknown";
 
-  // Yellow
+  // Conservative white detection.
+  if (s < 15 && v > 80) return "white";
+
+  // Reject grey and low-saturation pixels.
+  // Their hue is unreliable for colour classification.
+  if (s < 25) return "unknown";
+
+  // Yellow.
   if (h >= 40 && h < 75) return "yellow";
 
-  // Orange
+  // Orange.
   if (h >= 15 && h < 40) return "orange";
 
-  // Red
+  // Red.
   if (h >= 345 || h < 15) return "red";
 
-  // Green
+  // Green.
   if (h >= 75 && h < 170) return "green";
 
-  // Blue
+  // Blue.
   if (h >= 170 && h < 270) return "blue";
 
   return "unknown";
