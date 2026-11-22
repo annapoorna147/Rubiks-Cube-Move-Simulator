@@ -253,6 +253,144 @@ export class Cube3D {
     });
   }
 
+  loadCubeState(cube) {
+    if (!cube || !Array.isArray(cube.stickers) ||
+        cube.stickers.length !== 54) {
+      return Promise.reject(
+        new Error("Cube state must contain exactly 54 stickers.")
+      );
+    }
+
+    const colorValues = {
+      white: COLORS.U,
+      yellow: COLORS.D,
+      green: COLORS.F,
+      blue: COLORS.B,
+      red: COLORS.R,
+      orange: COLORS.L
+    };
+
+    const stickerMap = new Map();
+
+    for (const sticker of cube.stickers) {
+      if (
+        !sticker ||
+        !Array.isArray(sticker.position) ||
+        !Array.isArray(sticker.normal) ||
+        sticker.position.length !== 3 ||
+        sticker.normal.length !== 3 ||
+        sticker.position.some(v => !Number.isInteger(v) || v < -1 || v > 1) ||
+        sticker.normal.some(v => !Number.isInteger(v) || v < -1 || v > 1) ||
+        colorValues[sticker.color] === undefined
+      ) {
+        return Promise.reject(
+          new Error("Cube state contains an invalid sticker.")
+        );
+      }
+
+      const key =
+        sticker.position.join(",") + "|" + sticker.normal.join(",");
+
+      if (stickerMap.has(key)) {
+        return Promise.reject(
+          new Error("Cube state contains duplicate sticker positions.")
+        );
+      }
+
+      stickerMap.set(key, sticker.color);
+    }
+
+    if (stickerMap.size !== 54) {
+      return Promise.reject(
+        new Error("Cube state must contain 54 unique stickers.")
+      );
+    }
+
+    const directions = [
+      [1, 0, 0],
+      [-1, 0, 0],
+      [0, 1, 0],
+      [0, -1, 0],
+      [0, 0, 1],
+      [0, 0, -1]
+    ];
+
+    const colorAssignments = [];
+
+    for (let x = -1; x <= 1; x++) {
+      for (let y = -1; y <= 1; y++) {
+        for (let z = -1; z <= 1; z++) {
+          const grid = { x, y, z };
+
+          const colors = directions.map(normal => {
+            const position = [x, y, z];
+
+            const exposed = position.some(
+              (value, index) => value === normal[index] &&
+                value !== 0
+            );
+
+            if (!exposed) return COLORS.INNER;
+
+            const key =
+              position.join(",") + "|" + normal.join(",");
+
+            const color = stickerMap.get(key);
+
+            if (!color) {
+              throw new Error(
+                "Cube state is missing an exposed sticker."
+              );
+            }
+
+            return colorValues[color];
+          });
+
+          colorAssignments.push({ grid, colors });
+        }
+      }
+    }
+
+    const performLoad = () => {
+      const oldGeometry = this.cubelets[0]?.geometry;
+
+      for (const cubelet of this.cubelets) {
+        for (const material of cubelet.material) {
+          material.dispose();
+        }
+
+        this.cubeGroup.remove(cubelet);
+      }
+
+      oldGeometry?.dispose();
+
+      this.cubelets = [];
+      this.createCube();
+
+      for (const assignment of colorAssignments) {
+        const cubelet = this.cubelets.find(item => {
+          const grid = item.userData.grid;
+
+          return grid.x === assignment.grid.x &&
+            grid.y === assignment.grid.y &&
+            grid.z === assignment.grid.z;
+        });
+
+        if (!cubelet) {
+          throw new Error("Unable to locate a cubelet.");
+        }
+
+        cubelet.material.forEach((material, index) => {
+          material.color.setHex(assignment.colors[index]);
+          material.needsUpdate = true;
+        });
+      }
+    };
+
+    this.moveQueue = this.moveQueue.then(performLoad);
+    return this.moveQueue;
+  }
+
   resetToSolved() {
     const performReset = () => {
       const geometry = this.cubelets[0]?.geometry;
