@@ -395,9 +395,28 @@ function reconstructScannedCube() {
     const result = buildCubeFromScans(scannedFaces);
 
     if (!result.valid) {
+      currentCube = null;
+
       setScannerStatus(
         `Cube reconstruction failed: ${result.errors.join(" ")}`
       );
+
+      elements.healthCard.classList.remove("valid");
+      elements.healthCard.classList.add("invalid");
+      elements.overallStatus.textContent = "SCAN INVALID";
+      elements.overallSummary.textContent =
+        "The latest camera scan could not be reconstructed. Please review the scanning errors.";
+      elements.healthSymbol.textContent = "!";
+      elements.reportCount.textContent =
+        `${result.errors.length} ERROR${result.errors.length === 1 ? "" : "S"}`;
+      elements.reportMessages.replaceChildren();
+
+      result.errors.forEach(error => {
+        const message = document.createElement("p");
+        message.className = "report-item fail";
+        message.textContent = error;
+        elements.reportMessages.appendChild(message);
+      });
 
       console.error("Cube reconstruction errors:", result.errors);
       return;

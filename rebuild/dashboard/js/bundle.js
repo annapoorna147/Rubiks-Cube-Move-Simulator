@@ -648,8 +648,9 @@
           throw new Error("RGB values must be between 0 and 255.");
         }
         const { h, s, v } = rgbToHsv(r, g, b);
-        if (s < 20 && v > 65) return "white";
         if (v < 15) return "unknown";
+        if (s < 15 && v > 80) return "white";
+        if (s < 25) return "unknown";
         if (h >= 40 && h < 75) return "yellow";
         if (h >= 15 && h < 40) return "orange";
         if (h >= 345 || h < 15) return "red";
@@ -669,38 +670,136 @@
     "src/camera/face-scanner.js"(exports, module) {
       "use strict";
       var { detectColor } = require_color_detector();
-      function scanFace(imageData) {
+      var VALIDATION_ERROR = "Invalid image data.";
+      function validateImageData(imageData) {
         if (!imageData || !Number.isInteger(imageData.width) || !Number.isInteger(imageData.height) || imageData.width < 3 || imageData.height < 3 || !imageData.data) {
-          throw new Error("Invalid image data.");
+          throw new Error(VALIDATION_ERROR);
         }
         const { width, height, data } = imageData;
         if (data.length !== width * height * 4) {
           throw new Error("Pixel data length does not match image dimensions.");
         }
-        const face = [];
-        for (let row = 0; row < 3; row++) {
-          const faceRow = [];
-          for (let col = 0; col < 3; col++) {
+      }
+      function sampleSticker(imageData, row, col, options = {}) {
+        const { width, height, data } = imageData;
+        const sampleCount = options.sampleCount ?? 5;
+        const sampleFraction = options.sampleFraction ?? 0.4;
+        if (!Number.isInteger(sampleCount) || sampleCount < 1 || sampleCount > 15) {
+          throw new Error("sampleCount must be an integer between 1 and 15.");
+        }
+        if (!Number.isFinite(sampleFraction) || sampleFraction <= 0 || sampleFraction > 1) {
+          throw new Error("sampleFraction must be greater than 0 and at most 1.");
+        }
+        const cellWidth = width / 3;
+        const cellHeight = height / 3;
+        const centerX = (col + 0.5) * cellWidth;
+        const centerY = (row + 0.5) * cellHeight;
+        const halfWidth = cellWidth * sampleFraction / 2;
+        const halfHeight = cellHeight * sampleFraction / 2;
+        const counts = {
+          white: 0,
+          yellow: 0,
+          orange: 0,
+          red: 0,
+          green: 0,
+          blue: 0
+        };
+        let totalSamples = 0;
+        let classifiedSamples = 0;
+        for (let sampleRow = 0; sampleRow < sampleCount; sampleRow++) {
+          for (let sampleCol = 0; sampleCol < sampleCount; sampleCol++) {
             const x = Math.min(
               width - 1,
-              Math.floor((col + 0.5) * width / 3)
+              Math.max(
+                0,
+                Math.floor(
+                  centerX - halfWidth + (sampleCol + 0.5) * (2 * halfWidth) / sampleCount
+                )
+              )
             );
             const y = Math.min(
               height - 1,
-              Math.floor((row + 0.5) * height / 3)
+              Math.max(
+                0,
+                Math.floor(
+                  centerY - halfHeight + (sampleRow + 0.5) * (2 * halfHeight) / sampleCount
+                )
+              )
             );
             const index = (y * width + x) * 4;
-            const r = data[index];
-            const g = data[index + 1];
-            const b = data[index + 2];
-            faceRow.push(detectColor(r, g, b));
+            const color = detectColor(
+              data[index],
+              data[index + 1],
+              data[index + 2]
+            );
+            totalSamples++;
+            if (color !== "unknown") {
+              counts[color]++;
+              classifiedSamples++;
+            }
           }
-          face.push(faceRow);
         }
-        return face;
+        let winningColor = "unknown";
+        let winningCount = 0;
+        let tied = false;
+        for (const [color, count] of Object.entries(counts)) {
+          if (count > winningCount) {
+            winningColor = color;
+            winningCount = count;
+            tied = false;
+          } else if (count > 0 && count === winningCount) {
+            tied = true;
+          }
+        }
+        if (tied || winningCount === 0) {
+          winningColor = "unknown";
+        }
+        return {
+          color: winningColor,
+          confidence: classifiedSamples ? winningCount / classifiedSamples : 0,
+          coverage: totalSamples ? classifiedSamples / totalSamples : 0,
+          counts,
+          totalSamples,
+          classifiedSamples
+        };
+      }
+      function scanFaceDetailed(imageData, options = {}) {
+        validateImageData(imageData);
+        const colors = [];
+        const confidence = [];
+        const coverage = [];
+        const details = [];
+        for (let row = 0; row < 3; row++) {
+          const colorRow = [];
+          const confidenceRow = [];
+          const coverageRow = [];
+          const detailRow = [];
+          for (let col = 0; col < 3; col++) {
+            const result = sampleSticker(imageData, row, col, options);
+            colorRow.push(result.color);
+            confidenceRow.push(result.confidence);
+            coverageRow.push(result.coverage);
+            detailRow.push(result);
+          }
+          colors.push(colorRow);
+          confidence.push(confidenceRow);
+          coverage.push(coverageRow);
+          details.push(detailRow);
+        }
+        return {
+          colors,
+          confidence,
+          coverage,
+          details
+        };
+      }
+      function scanFace(imageData, options = {}) {
+        return scanFaceDetailed(imageData, options).colors;
       }
       module.exports = {
-        scanFace
+        scanFace,
+        scanFaceDetailed,
+        sampleSticker
       };
     }
   });
@@ -30026,9 +30125,23 @@ void main() {
     try {
       const result = (0, import_camera_pipeline.buildCubeFromScans)(scannedFaces);
       if (!result.valid) {
+        currentCube = null;
         setScannerStatus(
           `Cube reconstruction failed: ${result.errors.join(" ")}`
         );
+        elements.healthCard.classList.remove("valid");
+        elements.healthCard.classList.add("invalid");
+        elements.overallStatus.textContent = "SCAN INVALID";
+        elements.overallSummary.textContent = "The latest camera scan could not be reconstructed. Please review the scanning errors.";
+        elements.healthSymbol.textContent = "!";
+        elements.reportCount.textContent = `${result.errors.length} ERROR${result.errors.length === 1 ? "" : "S"}`;
+        elements.reportMessages.replaceChildren();
+        result.errors.forEach((error2) => {
+          const message = document.createElement("p");
+          message.className = "report-item fail";
+          message.textContent = error2;
+          elements.reportMessages.appendChild(message);
+        });
         console.error("Cube reconstruction errors:", result.errors);
         return;
       }
