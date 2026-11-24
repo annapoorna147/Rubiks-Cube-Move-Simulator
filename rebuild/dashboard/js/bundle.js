@@ -669,7 +669,7 @@
   var require_face_scanner = __commonJS({
     "src/camera/face-scanner.js"(exports, module) {
       "use strict";
-      var { detectColor } = require_color_detector();
+      var { detectColor, rgbToHsv } = require_color_detector();
       var VALIDATION_ERROR = "Invalid image data.";
       function validateImageData(imageData) {
         if (!imageData || !Number.isInteger(imageData.width) || !Number.isInteger(imageData.height) || imageData.width < 3 || imageData.height < 3 || !imageData.data) {
@@ -706,6 +706,13 @@
         };
         let totalSamples = 0;
         let classifiedSamples = 0;
+        let redTotal = 0;
+        let greenTotal = 0;
+        let blueTotal = 0;
+        let hueTotal = 0;
+        let saturationTotal = 0;
+        let valueTotal = 0;
+        const samples = [];
         for (let sampleRow = 0; sampleRow < sampleCount; sampleRow++) {
           for (let sampleCol = 0; sampleCol < sampleCount; sampleCol++) {
             const x = Math.min(
@@ -727,12 +734,19 @@
               )
             );
             const index = (y * width + x) * 4;
-            const color = detectColor(
-              data[index],
-              data[index + 1],
-              data[index + 2]
-            );
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const hsv = rgbToHsv(r, g, b);
+            const color = detectColor(r, g, b);
             totalSamples++;
+            redTotal += r;
+            greenTotal += g;
+            blueTotal += b;
+            hueTotal += hsv.h;
+            saturationTotal += hsv.s;
+            valueTotal += hsv.v;
+            samples.push({ r, g, b, color });
             if (color !== "unknown") {
               counts[color]++;
               classifiedSamples++;
@@ -760,7 +774,18 @@
           coverage: totalSamples ? classifiedSamples / totalSamples : 0,
           counts,
           totalSamples,
-          classifiedSamples
+          classifiedSamples,
+          averageRGB: {
+            r: redTotal / totalSamples,
+            g: greenTotal / totalSamples,
+            b: blueTotal / totalSamples
+          },
+          averageHSV: {
+            h: hueTotal / totalSamples,
+            s: saturationTotal / totalSamples,
+            v: valueTotal / totalSamples
+          },
+          samples
         };
       }
       function scanFaceDetailed(imageData, options = {}) {
@@ -920,10 +945,13 @@
   var require_camera_pipeline = __commonJS({
     "src/camera/camera-pipeline.js"(exports, module) {
       "use strict";
-      var { scanFace } = require_face_scanner();
+      var {
+        scanFace,
+        scanFaceDetailed
+      } = require_face_scanner();
       var { reconstructCube } = require_cube_reconstructor();
       var REQUIRED_FACES = ["U", "D", "F", "B", "R", "L"];
-      function scanCubeFace2(imageData, face) {
+      function scanCubeFace(imageData, face) {
         if (!REQUIRED_FACES.includes(face)) {
           throw new Error(`Invalid face: ${face}`);
         }
@@ -931,6 +959,16 @@
         return {
           face,
           colors
+        };
+      }
+      function scanCubeFaceDetailed2(imageData, face) {
+        if (!REQUIRED_FACES.includes(face)) {
+          throw new Error(`Invalid face: ${face}`);
+        }
+        const result = scanFaceDetailed(imageData);
+        return {
+          face,
+          ...result
         };
       }
       function buildCubeFromScans2(scannedFaces2) {
@@ -955,7 +993,8 @@
         return reconstructCube(faces);
       }
       module.exports = {
-        scanCubeFace: scanCubeFace2,
+        scanCubeFace,
+        scanCubeFaceDetailed: scanCubeFaceDetailed2,
         buildCubeFromScans: buildCubeFromScans2
       };
     }
@@ -30196,13 +30235,23 @@ void main() {
         canvas.width,
         canvas.height
       );
-      const scanResult = (0, import_camera_pipeline.scanCubeFace)(imageData, selectedFace);
+      const scanResult = (0, import_camera_pipeline.scanCubeFaceDetailed)(imageData, selectedFace);
       scannedFaces[selectedFace] = scanResult.colors;
       updateFaceProgress();
       setScannerStatus(
         `${selectedFace} face captured successfully.`
       );
       console.log(`RUBIX face scan completed: ${selectedFace}`, scanResult);
+      console.table(
+        scanResult.details.flat().map((sticker, index) => ({
+          sticker: index + 1,
+          color: sticker.color,
+          confidence: sticker.confidence.toFixed(2),
+          coverage: sticker.coverage.toFixed(2),
+          rgb: `${Math.round(sticker.averageRGB.r)}, ${Math.round(sticker.averageRGB.g)}, ${Math.round(sticker.averageRGB.b)}`,
+          hsv: `${sticker.averageHSV.h.toFixed(1)}, ${sticker.averageHSV.s.toFixed(1)}, ${sticker.averageHSV.v.toFixed(1)}`
+        }))
+      );
       if (Object.keys(scannedFaces).length === 6) {
         reconstructScannedCube();
       }
@@ -30243,9 +30292,23 @@ void main() {
       currentScramble = "";
       scrambleNotation.textContent = "CUBE LOADED FROM CAMERA SCAN";
       runDiagnostic();
-      setScannerStatus(
-        "Cube reconstructed successfully! Diagnostic analysis completed."
-      );
+      if (cube3D) {
+        cube3D.loadCubeState(currentCube).then(() => {
+          setScannerStatus(
+            "Cube reconstructed and loaded into the 3D visualizer successfully."
+          );
+          console.log("RUBIX 3D cube state synchronized.");
+        }).catch((error2) => {
+          console.error("3D cube loading failed:", error2);
+          setScannerStatus(
+            `Cube reconstructed, but 3D loading failed: ${error2.message}`
+          );
+        });
+      } else {
+        setScannerStatus(
+          "Cube reconstructed, but the 3D visualizer is unavailable."
+        );
+      }
       console.log("RUBIX cube reconstructed successfully.", result);
     } catch (error2) {
       console.error("Cube reconstruction failed:", error2);

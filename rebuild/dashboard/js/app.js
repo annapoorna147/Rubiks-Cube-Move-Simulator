@@ -4,7 +4,7 @@ import { createSolvedCube } from "../../src/cube.js";
 import { createDiagnosticReport } from "../../src/diagnostic-report.js";
 import { applySequence } from "../../src/moves.js";
 import {
-  scanCubeFace,
+  scanCubeFaceDetailed,
   buildCubeFromScans
 } from "../../src/camera/camera-pipeline.js";
 import { Cube3D } from "./visualizer/cube3d.js";
@@ -359,7 +359,7 @@ function captureFace() {
       canvas.height
     );
 
-    const scanResult = scanCubeFace(imageData, selectedFace);
+    const scanResult = scanCubeFaceDetailed(imageData, selectedFace);
 
     scannedFaces[selectedFace] = scanResult.colors;
 
@@ -370,6 +370,17 @@ function captureFace() {
     );
 
     console.log(`RUBIX face scan completed: ${selectedFace}`, scanResult);
+
+    console.table(
+      scanResult.details.flat().map((sticker, index) => ({
+        sticker: index + 1,
+        color: sticker.color,
+        confidence: sticker.confidence.toFixed(2),
+        coverage: sticker.coverage.toFixed(2),
+        rgb: `${Math.round(sticker.averageRGB.r)}, ${Math.round(sticker.averageRGB.g)}, ${Math.round(sticker.averageRGB.b)}`,
+        hsv: `${sticker.averageHSV.h.toFixed(1)}, ${sticker.averageHSV.s.toFixed(1)}, ${sticker.averageHSV.v.toFixed(1)}`
+      }))
+    );
 
     if (Object.keys(scannedFaces).length === 6) {
       reconstructScannedCube();
@@ -429,9 +440,23 @@ function reconstructScannedCube() {
 
     runDiagnostic();
 
-    setScannerStatus(
-      "Cube reconstructed successfully! Diagnostic analysis completed."
-    );
+    if (cube3D) {
+      cube3D.loadCubeState(currentCube).then(() => {
+        setScannerStatus(
+          "Cube reconstructed and loaded into the 3D visualizer successfully."
+        );
+        console.log("RUBIX 3D cube state synchronized.");
+      }).catch(error => {
+        console.error("3D cube loading failed:", error);
+        setScannerStatus(
+          `Cube reconstructed, but 3D loading failed: ${error.message}`
+        );
+      });
+    } else {
+      setScannerStatus(
+        "Cube reconstructed, but the 3D visualizer is unavailable."
+      );
+    }
 
     console.log("RUBIX cube reconstructed successfully.", result);
   } catch (error) {

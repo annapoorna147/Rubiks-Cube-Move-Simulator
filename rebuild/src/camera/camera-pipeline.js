@@ -1,6 +1,10 @@
 "use strict";
 
-const { scanFace } = require("./face-scanner");
+const {
+  scanFace,
+  scanFaceDetailed
+} = require("./face-scanner");
+
 const { reconstructCube } = require("./cube-reconstructor");
 
 const REQUIRED_FACES = ["U", "D", "F", "B", "R", "L"];
@@ -15,6 +19,19 @@ function scanCubeFace(imageData, face) {
   return {
     face,
     colors
+  };
+}
+
+function scanCubeFaceDetailed(imageData, face) {
+  if (!REQUIRED_FACES.includes(face)) {
+    throw new Error(`Invalid face: ${face}`);
+  }
+
+  const result = scanFaceDetailed(imageData);
+
+  return {
+    face,
+    ...result
   };
 }
 
@@ -46,5 +63,6 @@ function buildCubeFromScans(scannedFaces) {
 
 module.exports = {
   scanCubeFace,
+  scanCubeFaceDetailed,
   buildCubeFromScans
 };

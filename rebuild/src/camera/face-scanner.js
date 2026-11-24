@@ -1,6 +1,6 @@
 "use strict";
 
-const { detectColor } = require("./color-detector");
+const { detectColor, rgbToHsv } = require("./color-detector");
 
 const VALIDATION_ERROR = "Invalid image data.";
 
@@ -23,10 +23,6 @@ function validateImageData(imageData) {
   }
 }
 
-/**
- * Sample multiple pixels from the inner region of one sticker.
- * Unknown pixels are excluded from colour voting.
- */
 function sampleSticker(imageData, row, col, options = {}) {
   const { width, height, data } = imageData;
 
@@ -70,6 +66,15 @@ function sampleSticker(imageData, row, col, options = {}) {
   let totalSamples = 0;
   let classifiedSamples = 0;
 
+  let redTotal = 0;
+  let greenTotal = 0;
+  let blueTotal = 0;
+  let hueTotal = 0;
+  let saturationTotal = 0;
+  let valueTotal = 0;
+
+  const samples = [];
+
   for (let sampleRow = 0; sampleRow < sampleCount; sampleRow++) {
     for (let sampleCol = 0; sampleCol < sampleCount; sampleCol++) {
       const x = Math.min(
@@ -96,13 +101,24 @@ function sampleSticker(imageData, row, col, options = {}) {
 
       const index = (y * width + x) * 4;
 
-      const color = detectColor(
-        data[index],
-        data[index + 1],
-        data[index + 2]
-      );
+      const r = data[index];
+      const g = data[index + 1];
+      const b = data[index + 2];
+
+      const hsv = rgbToHsv(r, g, b);
+      const color = detectColor(r, g, b);
 
       totalSamples++;
+
+      redTotal += r;
+      greenTotal += g;
+      blueTotal += b;
+
+      hueTotal += hsv.h;
+      saturationTotal += hsv.s;
+      valueTotal += hsv.v;
+
+      samples.push({ r, g, b, color });
 
       if (color !== "unknown") {
         counts[color]++;
@@ -139,16 +155,21 @@ function sampleSticker(imageData, row, col, options = {}) {
       : 0,
     counts,
     totalSamples,
-    classifiedSamples
+    classifiedSamples,
+    averageRGB: {
+      r: redTotal / totalSamples,
+      g: greenTotal / totalSamples,
+      b: blueTotal / totalSamples
+    },
+    averageHSV: {
+      h: hueTotal / totalSamples,
+      s: saturationTotal / totalSamples,
+      v: valueTotal / totalSamples
+    },
+    samples
   };
 }
 
-/**
- * Scan a 3x3 Rubik's Cube face and return detailed sampling results.
- *
- * confidence = winning colour votes / classified pixel votes.
- * coverage = classified pixel votes / all sampled pixels.
- */
 function scanFaceDetailed(imageData, options = {}) {
   validateImageData(imageData);
 
@@ -186,9 +207,6 @@ function scanFaceDetailed(imageData, options = {}) {
   };
 }
 
-/**
- * Preserve the original API: return only a 3x3 colour grid.
- */
 function scanFace(imageData, options = {}) {
   return scanFaceDetailed(imageData, options).colors;
 }
