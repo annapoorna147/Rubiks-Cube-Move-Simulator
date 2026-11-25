@@ -829,6 +829,47 @@
     }
   });
 
+  // src/camera/face-orientation.js
+  var require_face_orientation = __commonJS({
+    "src/camera/face-orientation.js"(exports, module) {
+      "use strict";
+      var VALID_ROTATIONS = [0, 90, 180, 270];
+      function validateGrid(grid) {
+        if (!Array.isArray(grid) || grid.length !== 3 || !grid.every((row) => Array.isArray(row) && row.length === 3)) {
+          throw new Error("Face grid must be a 3x3 array.");
+        }
+      }
+      function rotateFace(grid, degrees = 0) {
+        validateGrid(grid);
+        if (!VALID_ROTATIONS.includes(degrees)) {
+          throw new Error("Rotation must be 0, 90, 180, or 270 degrees.");
+        }
+        let result = grid.map((row) => [...row]);
+        const turns = degrees / 90;
+        for (let turn = 0; turn < turns; turn++) {
+          const rotated = Array.from(
+            { length: 3 },
+            () => Array(3)
+          );
+          for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+              rotated[col][2 - row] = result[row][col];
+            }
+          }
+          result = rotated;
+        }
+        return result;
+      }
+      function rotateFaceClockwise(grid) {
+        return rotateFace(grid, 90);
+      }
+      module.exports = {
+        rotateFace,
+        rotateFaceClockwise
+      };
+    }
+  });
+
   // src/camera/cube-reconstructor.js
   var require_cube_reconstructor = __commonJS({
     "src/camera/cube-reconstructor.js"(exports, module) {
@@ -949,26 +990,34 @@
         scanFace,
         scanFaceDetailed
       } = require_face_scanner();
+      var { rotateFace } = require_face_orientation();
       var { reconstructCube } = require_cube_reconstructor();
       var REQUIRED_FACES = ["U", "D", "F", "B", "R", "L"];
-      function scanCubeFace(imageData, face) {
+      function validateFace(face) {
         if (!REQUIRED_FACES.includes(face)) {
           throw new Error(`Invalid face: ${face}`);
         }
-        const colors = scanFace(imageData);
+      }
+      function scanCubeFace(imageData, face, rotation = 0) {
+        validateFace(face);
+        const colors = rotateFace(scanFace(imageData), rotation);
         return {
           face,
+          rotation,
           colors
         };
       }
-      function scanCubeFaceDetailed2(imageData, face) {
-        if (!REQUIRED_FACES.includes(face)) {
-          throw new Error(`Invalid face: ${face}`);
-        }
+      function scanCubeFaceDetailed2(imageData, face, rotation = 0) {
+        validateFace(face);
         const result = scanFaceDetailed(imageData);
         return {
           face,
-          ...result
+          rotation,
+          ...result,
+          colors: rotateFace(result.colors, rotation),
+          confidence: rotateFace(result.confidence, rotation),
+          coverage: rotateFace(result.coverage, rotation),
+          details: rotateFace(result.details, rotation)
         };
       }
       function buildCubeFromScans2(scannedFaces2) {
@@ -29986,6 +30035,7 @@ void main() {
   var video = document.getElementById("camera-preview");
   var cameraPlaceholder = document.getElementById("camera-placeholder");
   var faceSelector = document.getElementById("face-selector");
+  var faceRotationSelector = document.getElementById("face-rotation");
   var startCameraButton = document.getElementById("start-camera");
   var captureFaceButton = document.getElementById("capture-face");
   var scannerStatus = document.getElementById("scanner-status");
@@ -30235,7 +30285,12 @@ void main() {
         canvas.width,
         canvas.height
       );
-      const scanResult = (0, import_camera_pipeline.scanCubeFaceDetailed)(imageData, selectedFace);
+      const selectedRotation = Number(faceRotationSelector?.value ?? 0);
+      const scanResult = (0, import_camera_pipeline.scanCubeFaceDetailed)(
+        imageData,
+        selectedFace,
+        selectedRotation
+      );
       scannedFaces[selectedFace] = scanResult.colors;
       updateFaceProgress();
       setScannerStatus(

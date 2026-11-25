@@ -5,33 +5,42 @@ const {
   scanFaceDetailed
 } = require("./face-scanner");
 
+const { rotateFace } = require("./face-orientation");
 const { reconstructCube } = require("./cube-reconstructor");
 
 const REQUIRED_FACES = ["U", "D", "F", "B", "R", "L"];
 
-function scanCubeFace(imageData, face) {
+function validateFace(face) {
   if (!REQUIRED_FACES.includes(face)) {
     throw new Error(`Invalid face: ${face}`);
   }
+}
 
-  const colors = scanFace(imageData);
+function scanCubeFace(imageData, face, rotation = 0) {
+  validateFace(face);
+
+  const colors = rotateFace(scanFace(imageData), rotation);
 
   return {
     face,
+    rotation,
     colors
   };
 }
 
-function scanCubeFaceDetailed(imageData, face) {
-  if (!REQUIRED_FACES.includes(face)) {
-    throw new Error(`Invalid face: ${face}`);
-  }
+function scanCubeFaceDetailed(imageData, face, rotation = 0) {
+  validateFace(face);
 
   const result = scanFaceDetailed(imageData);
 
   return {
     face,
-    ...result
+    rotation,
+    ...result,
+    colors: rotateFace(result.colors, rotation),
+    confidence: rotateFace(result.confidence, rotation),
+    coverage: rotateFace(result.coverage, rotation),
+    details: rotateFace(result.details, rotation)
   };
 }
 

@@ -19,6 +19,7 @@ const scrambleNotation = document.getElementById("scramble-notation");
 const video = document.getElementById("camera-preview");
 const cameraPlaceholder = document.getElementById("camera-placeholder");
 const faceSelector = document.getElementById("face-selector");
+const faceRotationSelector = document.getElementById("face-rotation");
 const startCameraButton = document.getElementById("start-camera");
 const captureFaceButton = document.getElementById("capture-face");
 const scannerStatus = document.getElementById("scanner-status");
@@ -359,7 +360,13 @@ function captureFace() {
       canvas.height
     );
 
-    const scanResult = scanCubeFaceDetailed(imageData, selectedFace);
+    const selectedRotation = Number(faceRotationSelector?.value ?? 0);
+
+    const scanResult = scanCubeFaceDetailed(
+      imageData,
+      selectedFace,
+      selectedRotation
+    );
 
     scannedFaces[selectedFace] = scanResult.colors;
 

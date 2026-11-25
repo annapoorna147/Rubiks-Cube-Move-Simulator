@@ -7,8 +7,11 @@ const {
 } = require("../src/camera/cube-reconstructor");
 
 const {
-  buildCubeFromScans
+  buildCubeFromScans,
+  scanCubeFace
 } = require("../src/camera/camera-pipeline");
+
+const { rotateFace } = require("../src/camera/face-orientation");
 
 const COLORS = {
   U: "white",
@@ -76,4 +79,58 @@ assert.strictEqual(solvedResult.structure.valid, true);
 assert.strictEqual(solvedResult.diagnosis.valid, true);
 console.log("PASS: Physical cube validation");
 
-console.log("\nAll 6 camera pipeline tests passed.");
+// Test 7: Pipeline supports 90-degree face rotation.
+const originalGrid = [
+  ["A", "B", "C"],
+  ["D", "E", "F"],
+  ["G", "H", "I"]
+];
+
+const rotatedGrid = rotateFace(originalGrid, 90);
+
+assert.deepStrictEqual(rotatedGrid, [
+  ["G", "D", "A"],
+  ["H", "E", "B"],
+  ["I", "F", "C"]
+]);
+console.log("PASS: 90-degree face rotation");
+
+// Test 8: Pipeline supports 180-degree face rotation.
+assert.deepStrictEqual(rotateFace(originalGrid, 180), [
+  ["I", "H", "G"],
+  ["F", "E", "D"],
+  ["C", "B", "A"]
+]);
+console.log("PASS: 180-degree face rotation");
+
+// Test 9: Pipeline supports 270-degree face rotation.
+assert.deepStrictEqual(rotateFace(originalGrid, 270), [
+  ["C", "F", "I"],
+  ["B", "E", "H"],
+  ["A", "D", "G"]
+]);
+console.log("PASS: 270-degree face rotation");
+
+// Test 10: Reject an invalid face rotation.
+assert.throws(
+  () => rotateFace(originalGrid, 45),
+  /Rotation must be/
+);
+console.log("PASS: Invalid face rotation rejection");
+
+// Test 11: Scan API records the requested rotation.
+const imageData = {
+  width: 30,
+  height: 30,
+  data: new Uint8ClampedArray(30 * 30 * 4)
+};
+
+const scanResult = scanCubeFace(imageData, "U", 90);
+
+assert.strictEqual(scanResult.face, "U");
+assert.strictEqual(scanResult.rotation, 90);
+assert.strictEqual(scanResult.colors.length, 3);
+assert.strictEqual(scanResult.colors[0].length, 3);
+console.log("PASS: Scan API accepts rotation parameter");
+
+console.log("\nAll 11 camera pipeline tests passed.");
